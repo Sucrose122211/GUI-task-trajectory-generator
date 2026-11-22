@@ -1,0 +1,11 @@
+* text=auto
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+team text eol=lf
+pipeline text eol=lf
+Makefile text eol=lf
+*.png binary
+*.jpg binary

@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "properties": {
+    "status": {"type": "string", "enum": ["ok", "needs_review"]},
+    "visual_steps": {"type": "array", "items": {"type": "string"}},
+    "final_click": {
+      "anyOf": [
+        {"type": "object", "properties": {"x": {"type": "number"}, "y": {"type": "number"}}, "required": ["x", "y"], "additionalProperties": false},
+        {"type": "null"}
+      ]
+    },
+    "review_reason": {"type": "string"}
+  },
+  "required": ["status", "visual_steps", "final_click", "review_reason"],
+  "additionalProperties": false
+}
+

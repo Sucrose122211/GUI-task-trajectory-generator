@@ -1,0 +1,6 @@
+{
+  "samples": [
+    {"id": "demo-save", "screenshot": "toolbar.png", "query": "Click Save", "target": {"box": [30, 55, 90, 40], "type": "text"}},
+    {"id": "demo-cancel", "screenshot": "toolbar.png", "query": "Click Cancel", "target": {"box": [170, 55, 90, 40], "type": "text"}}
+  ]
+}

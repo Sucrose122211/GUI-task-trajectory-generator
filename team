@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONPATH="$ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
+cd "$ROOT"
+if ! command -v python3 >/dev/null 2>&1; then
+  echo 'Python 3.10 이상이 필요합니다. QUICKSTART.md를 확인하세요.' >&2
+  exit 2
+fi
+exec python3 -m gui_trajectory.team "$@"

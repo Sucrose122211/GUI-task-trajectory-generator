@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONPATH="$ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
+case "${1:-help}" in
+  doctor|generate|-h|--help|help)
+    exec python3 -m gui_trajectory "$@"
+    ;;
+  *)
+    exec docker run --rm --user "$(id -u):$(id -g)" \
+      -v "$ROOT:$ROOT" -w "$ROOT" \
+      gui-trajectory:0.1 "$@"
+    ;;
+esac
+

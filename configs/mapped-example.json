@@ -1,0 +1,11 @@
+{
+  "records_path": "samples",
+  "image": "screenshot.path",
+  "instruction": "query",
+  "bbox": "target.box",
+  "bbox_format": "xyxy",
+  "units": "normalized",
+  "id": "id",
+  "platform_value": "desktop",
+  "element_type": "target.type"
+}
