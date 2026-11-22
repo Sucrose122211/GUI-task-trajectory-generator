@@ -20,3 +20,11 @@
   real datasets, generated results, local research files, and credentials stay excluded.
 - GitHub Actions runs `make build` and `make check` with fake teachers only.
 
+# Role-specific usage requests
+
+- Treat `/사용법 담당자` and `/사용법 팀원` as requests for step-by-step instructions.
+  Read `.agents/skills/gui-trajectory-usage/SKILL.md` and the selected role reference.
+- Explain the commands and expected files in Korean. A usage request does not start
+  generation, modify files, or upload anything. If no role is supplied, ask which role.
+- Codex clients that reject an unknown slash command can invoke the same skill as
+  `$gui-trajectory-usage 담당자` or `$gui-trajectory-usage 팀원`.

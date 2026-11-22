@@ -2,6 +2,8 @@
 
 프로그램과 매뉴얼은 GitHub 저장소로 배포합니다. 팀원은 clone 후 `./team setup`을 실행하고, 자기 구독으로 생성합니다. 원본 데이터와 생성 결과는 별도 파일로 전달합니다.
 
+담당자의 전체 순서를 한 번에 보려면 [담당자 단계별 절차](../.agents/skills/gui-trajectory-usage/references/coordinator.md)를 읽습니다. 에이전트에게 `/사용법 담당자`로 설명을 요청할 수도 있습니다. 팀원은 `/사용법 팀원`을 사용하며, 클라이언트별 호출 방법은 [사용법 스킬 안내](usage-skill.md)에 있습니다.
+
 ## 저장소에 들어가는 것
 
 - `README.md`, `QUICKSTART.md`, `AGENTS.md`.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "사용법"
+  short_description: "담당자와 팀원의 GUI trajectory 생성, 제출, 취합 절차 안내"
+  default_prompt: "$gui-trajectory-usage 역할을 확인하고 사용법을 단계별로 설명해줘."

@@ -6,6 +6,8 @@ Generate concise English visual observations for GUI grounding from D(I, q, a): 
 
 Read `AGENTS.md`, `QUICKSTART.md`, and this file before operating. Do not install host packages, copy credentials, invoke API fallback, or run inference just to test changes. `setup`, `init`, `doctor`, `plan`, `review`, `status`, `submit`, `release`, and dataset conversion do not call a model. `run` does. Execute it only within the user's authorized input and quantity. Generation is sequential. Do not translate the original instruction or repair invalid annotations silently.
 
+For `/사용법 담당자`, `/사용법 팀원`, or `$gui-trajectory-usage`, read `.agents/skills/gui-trajectory-usage/SKILL.md` and only the selected role reference. Return Korean step-by-step instructions with commands and expected artifacts; do not execute those commands merely because the user asked for usage. See `docs/usage-skill.md` for client invocation details. The Claude Code `/사용법` entrypoint routes to the same canonical skill.
+
 ## Entrypoints
 
 Clone https://github.com/Sucrose122211/GUI-task-trajectory-generator.git and run commands from the checkout root. `./team` changes to that root so relative arguments have a single base. It uses host Python 3.10+ and its standard library. `./pipeline doctor` and `generate` also run on the host to reuse existing CLI authentication. Other `pipeline` commands run in the project Docker image, mounting the project root. Keep input, image, configuration and output paths inside this root; external paths are not mounted. A dataset can be prepared and bundled in another checkout before transfer.

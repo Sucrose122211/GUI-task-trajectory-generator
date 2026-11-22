@@ -35,6 +35,9 @@ cd GUI-task-trajectory-generator
 | 새 데이터셋 연결 | [데이터셋 적응 안내](docs/dataset-adaptation.md) |
 | 상세 명령과 검수 기준 | [파이프라인 실행 안내](docs/pipeline-usage.md) |
 | 저장소 운영과 팀 배포 | [GitHub 배포 운영 안내](docs/github-distribution.md) |
+| 에이전트에게 역할별 단계 안내 받기 | [사용법 스킬](docs/usage-skill.md) |
+
+에이전트 채팅에서 `/사용법 담당자` 또는 `/사용법 팀원`으로 역할별 절차를 요청할 수 있다. Codex 입력창에서 한글 slash 명령을 거절하면 `$gui-trajectory-usage 담당자` 또는 `$gui-trajectory-usage 팀원`으로 호출한다. 자세한 불러오기 방법은 [사용법 스킬](docs/usage-skill.md)을 참고한다.
 
 ## 데이터와 결과 전달
 
