@@ -169,7 +169,7 @@ class DistributionTest(unittest.TestCase):
         with zipfile.ZipFile(archive) as zipped:
             names = [n.split("/", 1)[1] for n in zipped.namelist()]
             self.assertFalse(
-                any(n.startswith(("data/", "runs/", ".codex/", ".agent/")) for n in names)
+                any(n.startswith(("data/", "runs/", ".codex/", ".agent/", ".team/")) for n in names)
             )
             self.assertNotIn("job.json", names)
             self.assertEqual(
@@ -185,6 +185,8 @@ class DistributionTest(unittest.TestCase):
                 self.assertIn(f".agents/skills/gui-trajectory-usage/{relative}", names)
             self.assertIn("QUICKSTART.md", names)
             self.assertIn("requirements-local.txt", names)
+            self.assertIn("apps-script/Code.gs", names)
+            self.assertIn("docs/shared-assignment.md", names)
             self.assertFalse(any(n.startswith(".venv/") or n == ".pipeline-backend" for n in names))
             self.assertIn("examples/demo/images/toolbar.png", names)
             self.assertEqual(zipped.getinfo("software/team").external_attr >> 16 & 0o111, 0o111)

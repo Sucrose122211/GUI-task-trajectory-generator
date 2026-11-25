@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from .bundles import bundle_data, bundle_run
+from .campaign import create_campaign
 from .data import prepare, relocate, select_pilot
 from .fetch import fetch_screenspot
 from .io import load_manifest, read_json, write_json, write_jsonl
@@ -72,10 +73,23 @@ def parser():
     run_bundle = sub.add_parser("bundle-run", help="Pack portable results for team submission")
     run_bundle.add_argument("--run", type=Path, required=True)
     run_bundle.add_argument("--output", type=Path, required=True)
+    campaign = sub.add_parser("campaign", help="Create a seeded, portable work catalog")
+    campaign.add_argument("--manifest", type=Path, required=True)
+    campaign.add_argument("--name", required=True)
+    campaign.add_argument("--seed", type=int, default=42)
+    campaign.add_argument("--batch-size", type=int, default=30)
+    campaign.add_argument(
+        "--providers", nargs="+", choices=("codex", "claude"), default=["codex", "claude"]
+    )
+    campaign.add_argument("--output", type=Path, required=True)
     return root
 
 
 def dispatch(args):
+    if args.command == "campaign":
+        return create_campaign(
+            args.manifest, args.output, args.name, args.seed, args.batch_size, args.providers
+        )
     if args.command == "fetch-screenspot":
         return fetch_screenspot(args.output, args.revision)
     if args.command == "prepare":

@@ -13,7 +13,7 @@
 - 사람용, 에이전트용, 데이터 적응 및 운영 문서.
 - `.github/workflows/check.yml` 자동 검사.
 
-개인 실행 환경 `.venv/`, `.pipeline-backend`, 실제 데이터, 생성 결과, 논문 PDF, 검수 산출물, 개인 인증 디렉터리와 로컬 작업 기록은 제외합니다. `.gitignore`를 제공하며, 처음 커밋할 때도 코드 경로를 명시적으로 선택합니다.
+개인 실행 환경 `.venv/`, `.pipeline-backend`, `.team/`, 실제 데이터, 생성 결과, 논문 PDF, 검수 산출물, 개인 인증 디렉터리와 로컬 작업 기록은 제외합니다. `.gitignore`를 제공하며, 처음 커밋할 때도 코드 경로를 명시적으로 선택합니다.
 
 ## 저장소와 접근 권한
 
@@ -28,20 +28,18 @@ gh repo create gui-trajectory --private
 
 ## 팀원에게 전달할 것
 
-1. GitHub 저장소 URL과 접근 권한.
-2. `QUICKSTART.md` 링크.
-3. 담당 데이터 ZIP과 사용할 교사(Codex 또는 Claude).
+담당자는 [공유 시트 최초 설정](shared-assignment.md)을 한 번 진행합니다. 배정 행은 register로 자동 생성하고 이후 팀원들이 acquire로 작업을 선택합니다. 담당자별 입력 ZIP이나 배정표를 수동 작성할 필요가 없습니다.
 
-```bash
-./pipeline shard --manifest data/custom/manifest.jsonl --count 3 --output data/shards
-./pipeline bundle-data --manifest data/shards/shard-000.jsonl --output dist/assignment-a.zip
-```
+1. GitHub 저장소 URL, 접근 권한과 공통 코드 버전.
+2. 전체 데이터의 고정 revision과 다운로드 및 변환 명령.
+3. 공통 campaign 파일, Apps Script /exec URL과 별도로 전달하는 참여 코드.
+4. 서로 다른 팀원 ID, 사용할 교사와 실제 결과 ZIP을 전달할 공유 위치.
 
-데이터 ZIP에는 이미지도 포함됩니다. 저장소에 대용량 데이터를 커밋하지 않습니다. 팀원은 데이터 ZIP을 clone한 폴더의 `data/`에 풀고 매뉴얼대로 실행합니다. 구독 인증은 각자 자기 컴퓨터에서 유지합니다.
+시트 편집 권한은 팀원에게 필요하지 않습니다. join 이후 배정과 진행은 자동 기록합니다. 기존 shard와 bundle-data는 수동 ZIP 배분이 필요한 경우에도 사용할 수 있습니다. 구독 인증은 각자 자기 컴퓨터에서 유지합니다.
 
 ## 수정과 자동 검사
 
-기능 변경은 별도 브랜치에서 커밋하고 PR로 검토합니다. `main` push와 PR에서 GitHub Actions가 컨테이너 빌드, Ruff 검사, 가짜 교사 테스트, wheel build를 실행합니다. 구독 로그인이나 상용 모델 호출은 하지 않습니다. 검사 설정은 [공식 checkout 액션](https://github.com/actions/checkout)의 v6를 사용하며 읽기 권한만 요청합니다.
+기능 변경은 별도 브랜치에서 커밋하고 PR로 검토합니다. `main` push와 PR에서 GitHub Actions가 컨테이너 빌드, Ruff 검사, 가짜 교사 테스트, Apps Script 모형 검사와 wheel build를 실행합니다. 구독 로그인이나 상용 모델 호출은 하지 않습니다. 검사 설정은 [공식 checkout 액션](https://github.com/actions/checkout)의 v6를 사용하며 읽기 권한만 요청합니다.
 
 ```bash
 make build

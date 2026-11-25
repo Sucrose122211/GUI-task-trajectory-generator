@@ -23,6 +23,15 @@
   real datasets, generated results, local research files, and credentials stay excluded.
 - GitHub Actions runs `make build` and `make check` with fake teachers only.
 
+# Shared assignment
+
+- Default team distribution uses a seeded campaign catalog and Google Sheets through
+  `apps-script/Code.gs`. Read `docs/shared-assignment.md` for one-time owner deployment.
+- Workers use join/acquire/run/submit; they never maintain sheet rows or score CSVs.
+- `.team/` contains participation keys and claim state; exclude it from Git and archives.
+- submit records local ZIP creation, not file upload or human acceptance.
+- Tests use fake HTTP and Node Apps Script fixtures; no live Google deployment is implied.
+
 # Role-specific usage requests
 
 - Treat `/사용법 담당자` and `/사용법 팀원` as requests for step-by-step instructions.

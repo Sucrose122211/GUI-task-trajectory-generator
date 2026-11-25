@@ -14,10 +14,12 @@ cd GUI-task-trajectory-generator
 
 저장소의 `.venv`에 이미지 처리 라이브러리만 설치한다. 시스템 Python 패키지는 변경하지 않으며 가상환경을 직접 활성화할 필요도 없다. Python의 `venv`와 `pip`, 최초 설치 시 인터넷 연결이 필요하다. Docker를 사용하려면 `./team setup --backend docker`를 실행한다. 선택은 이 컴퓨터의 저장소에 기억되며, 이후 `./team setup`은 같은 방식을 사용한다.
 
-담당 데이터는 `data/`에 둔 뒤 다음과 같이 실행한다. Claude를 사용하면 `--provider claude`를 선택한다.
+전체 데이터는 담당자가 안내한 방법으로 `data/`에 준비한다. [공유 배정 설정](docs/shared-assignment.md)을 한 번 마친 뒤 다음과 같이 자동으로 작업을 받는다. Claude를 사용하면 `--provider claude`를 선택한다.
 
 ```bash
-./team init --provider codex --manifest data/assignment-a/manifest.jsonl
+./team join --campaign data/campaign.json --manifest data/full/manifest.jsonl \
+  --url '배포된_HTTPS_EXEC_URL' --worker member-a --provider codex
+./team acquire
 ./team doctor
 ./team plan
 ./team run --limit 1
@@ -26,12 +28,13 @@ cd GUI-task-trajectory-generator
 ./team submit
 ```
 
-`plan`까지는 생성하지 않는다. `run`은 구독 사용량을 소비하며, 같은 명령으로 완료한 입력을 건너뛰고 재개한다. 담당 데이터가 없으면 [합성 예제](docs/dataset-adaptation.md#1-포함된-예제로-변환-확인)로 변환과 계획 확인부터 실행할 수 있다.
+`join` 때 참여 코드를 입력하면 배정과 진행 상태는 자동 기록된다. 팀원은 시트나 점수표를 관리하지 않는다. 전량 생성 후 `submit`하고 `acquire`하면 다음 작업을 받는다. `plan`까지는 생성하지 않는다. `run`은 구독 사용량을 소비하며, 같은 명령으로 완료한 입력을 건너뛰고 재개한다. 담당 데이터가 없으면 [합성 예제](docs/dataset-adaptation.md#1-포함된-예제로-변환-확인)로 변환과 계획 확인부터 실행할 수 있다.
 
 ## 매뉴얼
 
 | 읽는 사람과 목적 | 문서 |
 | --- | --- |
+| 담당자, 공유 시트 최초 설정 | [자동 배정 안내](docs/shared-assignment.md) |
 | 팀원, 처음 실행 | [빠른 시작](QUICKSTART.md) |
 | 에이전트, 구조와 실행 계약 파악 | [에이전트 안내](docs/agent-manual.md) |
 | 새 데이터셋 연결 | [데이터셋 적응 안내](docs/dataset-adaptation.md) |
@@ -43,7 +46,7 @@ cd GUI-task-trajectory-generator
 
 ## 데이터와 결과 전달
 
-프로그램은 이 저장소를 clone하거나 pull해서 받는다. 담당 데이터는 `./pipeline bundle-data`로 원본 이미지와 함께 따로 전달하고, 팀원은 `./team submit`으로 결과 ZIP을 만든다. 실제 데이터, 생성 결과, 개인 인증 정보는 Git에서 제외한다. `examples/demo/`에는 설치 확인용 합성 화면과 주석만 포함한다.
+프로그램은 이 저장소를 clone하거나 pull해서 받는다. 팀원은 같은 전체 데이터와 campaign 파일을 준비하고 `acquire`로 자기 입력을 선택한다. 기존 수동 ZIP 배분도 지원한다. 팀원은 `./team submit`으로 결과 ZIP을 만든다. 실제 데이터, 생성 결과, `.team/`의 연결 정보와 개인 인증 정보는 Git에서 제외한다. `examples/demo/`에는 설치 확인용 합성 화면과 주석만 포함한다.
 
 ## 개발 검사
 

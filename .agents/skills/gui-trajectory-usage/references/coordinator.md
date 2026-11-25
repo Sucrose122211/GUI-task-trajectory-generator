@@ -1,76 +1,38 @@
 # 담당자 사용법
 
-담당자가 원본 데이터를 준비해 나누고, 팀원들의 결과를 받아 병합하고 최종 검수하는 절차다. 아래는 팀원 A, B, C 세 명의 예시다. 실제 데이터셋은 팀에서 정한다. `team/custom`, `local-v1`, 파일 경로는 선택한 데이터에 맞게 바꾼다.
+기본은 공통 전체 데이터, 시드로 고정한 campaign과 공유 시트 자동 배정이다. 입력을 팀원별 ZIP으로 미리 나누거나 진행표를 직접 관리할 필요가 없다. 팀원이 문서를 편집하는 단계를 요구하지 않는다.
 
-## 1. 저장소 접근과 공통 환경 준비
+## 1. 저장소와 데이터 준비
 
-팀원에게 저장소 접근 권한을 제공한다. 담당자와 팀원 모두 Linux 또는 WSL에서 Git과 Python 3.10 이상을 준비한다. Docker 없이 실행하려면 Python의 venv와 pip가 필요하다. 생성 팀원은 사용할 교사의 CLI와 구독 로그인이 추가로 필요하다.
+Linux 또는 WSL에서 저장소를 clone하고 team setup --backend local을 실행한다. Git 커밋을 기록하고 모두 같은 코드 버전을 사용한다. Docker 방식도 지원한다. 생성 데이터셋과 고정 revision은 팀이 정한다. ScreenSpot-v2는 pilot_dev로 유지한다. docs/dataset-adaptation.md에 따라 전체 데이터를 다운로드하고 변환한다. 팀원도 같은 원본과 명령으로 전체 manifest를 준비한다.
 
-```bash
-git clone https://github.com/Sucrose122211/GUI-task-trajectory-generator.git
-cd GUI-task-trajectory-generator
-./team setup --backend local
-git rev-parse HEAD
-```
+## 2. 공유 시트 최초 설정
 
-로컬 실행은 저장소의 `.venv`에만 라이브러리를 설치한다. 가상환경 활성화는 필요 없다. Docker를 사용하려면 `./team setup --backend docker`를 실행한다. 선택을 기억하므로 업데이트 후에는 `./team setup`으로 같은 환경을 갱신한다.
+Google Sheets를 새로 만들고 확장 프로그램 → Apps Script를 연다. apps-script/Code.gs를 붙여넣고, 프로젝트 설정에서 manifest 표시를 켠 뒤 apps-script/appsscript.json도 반영한다. setup 함수를 한 번 실행하여 권한을 승인한다. Campaigns와 Tasks 탭이 생기며, 프로젝트 설정의 Script properties에 SHEET_ID와 TEAM_KEY가 자동 생성된다. 참여 코드는 로그나 문서에 넣지 말고 별도 전달한다.
 
-이미 clone했다면 해당 폴더에서 작업한다. 출력된 커밋 값을 배정 안내에 기록해 팀원들이 같은 코드와 프롬프트를 쓰게 한다. 이후 명령은 저장소 루트에서 실행한다.
+웹 앱으로 새 배포하고 실행 사용자는 본인, 접근은 모든 사용자로 선택한다. /exec URL을 사용한다. Workspace 정책상 이 배포가 불가능하면 관리자 허용 또는 다른 계정이 필요하다. 정확한 화면별 절차는 docs/shared-assignment.md를 읽는다. 실제 배포가 끝나지 않았다면 끝났다고 말하지 않는다.
 
-## 2. 원본 데이터와 매핑 준비
+## 3. 고정 작업 목록과 시트 등록
+
+아래는 실제 데이터의 경로 예시다.
 
 ```bash
-mkdir -p data/custom/images
-cp configs/mapped-example.json data/custom/mapping.json
+./pipeline campaign --manifest data/full/manifest.jsonl --name baseline-v1 \
+  --seed 42 --batch-size 30 --providers codex claude --output data/campaign.json
+./team register --campaign data/campaign.json --url '배포된_HTTPS_EXEC_URL'
 ```
 
-선정한 원본 주석은 `data/custom/annotations.json`, 이미지는 `data/custom/images/`에 놓는다. 매핑 예제를 실제 주석에 맞게 수정한다. 기존 예제는 `samples` 배열, `screenshot.path`, `query`, 정규화된 `target.box`의 xyxy 형식이다. 픽셀 xywh를 쓰는 원본에 이 설정을 그대로 적용하면 안 된다. `docs/dataset-adaptation.md`에서 필드, 좌표 단위, 점 정답 및 다중 대상 설정을 확인한다.
+register의 숨김 입력으로 참여 코드를 넣는다. 같은 화면은 나누지 않으며 한 묶음이 30개를 넘을 수 있다. 각 묶음에 교사별 작업이 생긴다. 한 교사만 수집하면 providers를 하나로 지정한다. 같은 실험 재등록은 진행을 보존하고 설정이 다른 재등록은 거절한다. 변경은 새 실험 이름으로 한다.
 
-## 3. 공통 manifest로 변환
+## 4. 팀원에게 전달
 
-아래는 학습용으로 사용할 수 있는 별도 데이터셋의 예시다. ScreenSpot-v2 파일럿은 전용 변환기와 `pilot_dev` 역할을 사용한다.
+저장소와 공통 커밋, 전체 데이터 다운로드 및 변환 명령, campaign 파일, /exec URL과 별도 참여 코드, 중복되지 않는 팀원 ID와 교사, 실제 결과 ZIP 전달 위치를 안내한다. 팀원은 join, acquire, doctor, plan, 제한 run과 전체 run, submit, acquire로 진행한다. 시트 편집 권한이나 수동 진행 기록을 요구하지 않는다.
 
-```bash
-./pipeline prepare \
-  --adapter mapped \
-  --annotations data/custom/annotations.json \
-  --image-root data/custom/images \
-  --mapping data/custom/mapping.json \
-  --dataset team/custom --revision local-v1 --role train \
-  --output data/custom/manifest.jsonl
+## 5. 진행과 결과 수령
 
-cat data/custom/manifest.prepare.json
-```
+시트는 담당자, 작업 번호, 교사, 전체 및 완료, 실패, 자동 유효 건수, 마지막 갱신과 ZIP 이름을 자동 표시한다. submitted는 로컬 ZIP 생성 완료이므로 실제 파일을 수령했는지 별도 확인한다. 사람 검수 통과가 아니다. 오래 멈춘 배정은 담당자와 소통해 재개하며 자동 회수는 없다. 결과가 없는 배정은 팀원의 team return으로 반납할 수 있다. 행을 임의로 수정하지 않는다.
 
-생성된 `manifest.jsonl`과 보고서의 `valid`, `invalid`, `errors`를 확인한다. 잘못된 주석은 오류 목록에 남으며 입력에서 빠진다. 전부 오류여도 변환 보고서는 만들어지므로 명령 성공만으로 판단하지 않는다.
-
-## 4. 팀원별 입력 분배
-
-```bash
-./pipeline shard \
-  --manifest data/custom/manifest.jsonl \
-  --count 3 --output data/shards
-```
-
-`shard-000.jsonl`, `shard-001.jsonl`, `shard-002.jsonl`이 만들어진다. 출력의 `sizes`를 확인한다. 같은 원본 화면 그룹은 분리하지 않으며 화면 그룹이 부족하면 빈 shard가 생길 수 있다. 빈 할당을 배정하지 않는다.
-
-```bash
-./pipeline bundle-data --manifest data/shards/shard-000.jsonl --output dist/assignment-a.zip
-./pipeline bundle-data --manifest data/shards/shard-001.jsonl --output dist/assignment-b.zip
-./pipeline bundle-data --manifest data/shards/shard-002.jsonl --output dist/assignment-c.zip
-```
-
-세 ZIP에 각 입력과 원본 이미지가 들어간다. ZIP은 덮어쓰지 않으므로 다시 만들 때 새 이름을 정한다.
-
-## 5. 배정표와 파일 전달
-
-| 팀원 | 입력 ZIP | 교사 예시 | 제출 파일명 |
-| --- | --- | --- | --- |
-| A | assignment-a.zip | Codex | member-a.zip |
-| B | assignment-b.zip | Claude | member-b.zip |
-| C | assignment-c.zip | Codex | member-c.zip |
-
-저장소 URL, 코드 커밋, 담당 ZIP, 교사, 배정 건수, 결과를 올릴 공유 위치를 전달한다. 코드만 GitHub에서 배포하며 실제 데이터와 결과 ZIP은 따로 전달한다. 이 표는 입력을 나눠 생성량을 확보하는 예시다. 같은 입력에서 두 교사를 비교하려면 동일 assignment를 Codex와 Claude 담당자에게 각각 전달한다.
+이후는 아래의 기존 ZIP 취합과 최종 검수 절차를 사용한다. member-a.zip 등의 이름은 실제 받은 ZIP명으로 바꾼다. 팀원은 점수표를 작성하지 않고 담당자가 병합 후 최종 검수한다.
 
 ## 6. 제출 파일 수령과 압축 해제
 

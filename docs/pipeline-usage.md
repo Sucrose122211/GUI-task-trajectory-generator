@@ -2,7 +2,22 @@
 
 ScreenSpot-v2의 30개 입력을 같은 조건으로 Codex와 Claude에 제공한다. 실제 모델을 지정하지 않으면 각 CLI의 기본 모델을 사용한다. 다른 데이터셋은 공통 manifest로 변환한 뒤 같은 생성 명령을 사용한다.
 
-## 팀원용 간단 실행
+## 공유 시트 자동 배정 (기본)
+
+담당자는 [최초 설정 안내](shared-assignment.md)에 따라 Google Sheets와 Apps Script를 한 번 배포하고, `./pipeline campaign`으로 만든 공통 작업 목록을 `./team register`로 등록한다. 팀원은 같은 전체 데이터를 준비한 뒤 `join → acquire → doctor → plan → run → submit → acquire`로 작업을 받는다. 팀원은 시트나 점수 CSV를 편집하지 않는다. run은 진행을 자동 기록하고, submit은 로컬 ZIP 생성 상태와 파일명을 자동 기록한다. 실제 파일 업로드와 담당자의 최종 검수는 별도다. 연결 장애는 로컬에 기록해 재동기화하며 신규 배정은 온라인에서만 허용한다.
+
+```bash
+./pipeline campaign --manifest data/full/manifest.jsonl --name baseline-v1 \
+  --seed 42 --batch-size 30 --providers codex claude --output data/campaign.json
+./team register --campaign data/campaign.json --url '배포된_HTTPS_EXEC_URL'
+./team join --campaign data/campaign.json --manifest data/full/manifest.jsonl \
+  --url '배포된_HTTPS_EXEC_URL' --worker member-a --provider codex
+./team acquire
+```
+
+register와 join은 참여 코드를 숨김 입력으로 받는다. 연결 상태는 `.team/`에 보관하며 Git과 ZIP에는 넣지 않는다. `./team sync`는 상태만 재전송하고, `./team return`은 아직 결과가 없는 배정만 반납한다. 모델 선택은 기존 CLI 기본값이다. 공유 배정에서는 등록된 입력과 프롬프트, 교사, 결과 경로를 유지해야 한다. 전체 명령과 예외 처리는 [자동 배정 안내](shared-assignment.md)를 따른다.
+
+## 기존 수동 배정 실행
 
 [빠른 시작](../QUICKSTART.md)에 따라 `./team setup`으로 준비하고, `./team init --provider codex --manifest data/assignment-a/manifest.jsonl`로 작업을 설정한다. 이후 `./team doctor`, `./team plan`, `./team run --limit 1`, `./team run`, `./team review`, `./team submit` 순서로 실행한다. Claude를 쓰면 `--provider claude`를 선택한다.
 

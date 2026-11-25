@@ -1,14 +1,19 @@
 """Small host-side wrapper for team members. Requires only Python's standard library."""
 
 import argparse
+import getpass
 import json
 import os
+import signal
 import subprocess
 import sys
+import time
+from contextlib import nullcontext
 from pathlib import Path
 
-from . import __version__
+from . import __version__, coordination
 from .bundles import bundle_run, release
+from .campaign import load_campaign
 from .io import load_manifest, read_json, write_json
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -45,7 +50,23 @@ def settings(path):
     return config
 
 
-def call(*args):
+def call(*args, progress=None):
+    if progress:
+        with subprocess.Popen([str(ROOT / "pipeline"), *map(str, args)], cwd=ROOT) as process:
+            try:
+                while True:
+                    try:
+                        return process.wait(timeout=2)
+                    except subprocess.TimeoutExpired:
+                        progress()
+            except BaseException:
+                process.send_signal(signal.SIGINT)
+                try:
+                    process.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+                raise
     return subprocess.run(
         [str(ROOT / "pipeline"), *map(str, args)], cwd=ROOT, check=False
     ).returncode
@@ -92,6 +113,18 @@ def parser():
     setup_command.add_argument(
         "--backend", choices=("docker", "local"), help="local: 저장소의 .venv 사용, Docker 불필요"
     )
+    register = sub.add_parser("register", help="담당자: 실험을 공유 시트에 등록")
+    register.add_argument("--campaign", type=Path, required=True)
+    register.add_argument("--url", required=True, help="Apps Script 웹 앱 /exec 주소")
+    join = sub.add_parser("join", help="공유 배정표에 참여, 시트 수동 편집 불필요")
+    join.add_argument("--campaign", type=Path, required=True)
+    join.add_argument("--manifest", type=Path, required=True, help="전체 데이터의 로컬 manifest")
+    join.add_argument("--url", required=True)
+    join.add_argument("--worker", required=True)
+    join.add_argument("--provider", choices=("codex", "claude"), required=True)
+    sub.add_parser("acquire", help="미배정 작업 자동 선택, 진행 중이면 같은 작업 재개")
+    sub.add_parser("sync", help="진행 상태를 공유 시트에 다시 동기화")
+    sub.add_parser("return", help="생성을 시작하지 않은 작업 반납")
     init = sub.add_parser("init", help="교사와 입력을 정해 작업 설정 만들기")
     init.add_argument("--provider", choices=("codex", "claude"), required=True)
     init.add_argument("--manifest", type=Path, required=True)
@@ -106,6 +139,7 @@ def parser():
     submit.add_argument(
         "--output", type=Path, help="새 ZIP 경로 (기본 dist/<결과폴더>-results.zip)"
     )
+    submit.add_argument("--result-url", help="이미 올린 결과 ZIP 링크를 시트에 자동 기록")
     package = sub.add_parser("release", help="팀에 전달할 프로그램과 매뉴얼 ZIP 만들기")
     package.add_argument(
         "--output", type=Path, default=Path(f"dist/gui-trajectory-team-{__version__}.zip")
@@ -122,73 +156,153 @@ def main():
     if sys.version_info < (3, 10):  # noqa: UP036 - source wrapper can run before installation
         root.exit(2, "Python 3.10 이상이 필요합니다.\n")
     try:
-        if args.command == "setup":
-            code = setup(args.backend)
-        elif args.command == "release":
-            print(json.dumps(release(ROOT, inside(args.output)), ensure_ascii=False, indent=2))
-            code = 0
-        elif args.command == "init":
-            config_path = inside(args.config)
-            if config_path.exists():
-                raise ValueError("설정 파일이 이미 있습니다. --config로 다른 이름을 지정하세요.")
-            manifest = inside(args.manifest)
-            rows = load_manifest(manifest)
-            if not rows:
-                raise ValueError("입력이 비어 있습니다.")
-            for row in rows:
-                inside(row["image"]["path"], manifest.parent)
-            output = inside(args.output or Path("runs") / args.provider)
-            write_json(
-                config_path,
-                {
-                    "schema_version": 1,
-                    "provider": args.provider,
-                    "manifest": os.path.relpath(manifest, config_path.parent),
-                    "output": os.path.relpath(output, config_path.parent),
-                    "model": None,
-                    "timeout": 300,
-                    "retries": 1,
-                },
-            )
-            print(f"설정 저장: {config_path}\n다음: ./team --config {args.config} plan")
-            code = 0
-        else:
-            config = settings(args.config)
-            output = Path(config["output"])
-            if args.command == "doctor":
-                code = call("doctor", "--provider", config["provider"])
-            elif args.command in ("plan", "run"):
-                options = [
-                    "generate",
-                    "--manifest",
-                    config["manifest"],
-                    "--provider",
-                    config["provider"],
-                    "--output",
-                    output,
-                    "--timeout",
-                    config["timeout"],
-                    "--retries",
-                    config["retries"],
-                ]
-                if config.get("model"):
-                    options.extend(["--model", config["model"]])
-                if args.command == "plan":
-                    options.append("--dry-run")
-                elif args.limit is not None:
-                    options.extend(["--limit", args.limit])
-                code = call(*options)
-            elif args.command == "review":
-                code = call("review", "--run", output, "--output", output / "review")
-                if not code:
-                    print(f"검수 화면: {output / 'review/review.html'}")
-            elif args.command == "status":
-                code = call("summary", "--run", output)
-            else:
-                destination = inside(args.output or Path("dist") / f"{output.name}-results.zip")
-                print(json.dumps(bundle_run(output, destination), ensure_ascii=False, indent=2))
+        config_path = inside(args.config)
+        needs_lock = (
+            args.command in ("join", "acquire", "sync", "return")
+            or coordination.state_path(ROOT, config_path).exists()
+        )
+        with coordination.session_lock(ROOT, config_path) if needs_lock else nullcontext():
+            if args.command in ("register", "join"):
+                key = os.environ.get("GUI_TEAM_KEY") or getpass.getpass(
+                    "참여 코드 (화면에 표시되지 않음): "
+                )
+                if not key:
+                    raise ValueError("참여 코드가 필요합니다.")
+                if args.command == "register":
+                    catalog = load_campaign(inside(args.campaign))
+                    tasks = [
+                        {
+                            "batch_id": b["batch_id"],
+                            "provider": provider,
+                            "total": len(b["sample_ids"]),
+                        }
+                        for b in catalog["batches"]
+                        for provider in catalog["providers"]
+                    ]
+                    result = coordination.request(
+                        args.url,
+                        key,
+                        "register",
+                        campaign_id=catalog["campaign_id"],
+                        fingerprint=catalog["fingerprint"],
+                        tasks=tasks,
+                    )
+                else:
+                    result = coordination.join(
+                        ROOT,
+                        inside(args.config),
+                        inside(args.campaign),
+                        inside(args.manifest),
+                        args.url,
+                        args.worker,
+                        args.provider,
+                        key,
+                    )
+                print(json.dumps(result, ensure_ascii=False, indent=2))
                 code = 0
-    except (OSError, ValueError, KeyError, TypeError) as exc:
+            elif args.command in ("acquire", "sync", "return"):
+                function = {
+                    "acquire": coordination.acquire,
+                    "sync": coordination.synchronize,
+                    "return": coordination.relinquish,
+                }[args.command]
+                print(json.dumps(function(ROOT, inside(args.config)), ensure_ascii=False, indent=2))
+                code = 0
+            elif args.command == "setup":
+                code = setup(args.backend)
+            elif args.command == "release":
+                print(json.dumps(release(ROOT, inside(args.output)), ensure_ascii=False, indent=2))
+                code = 0
+            elif args.command == "init":
+                config_path = inside(args.config)
+                if config_path.exists():
+                    raise ValueError(
+                        "설정 파일이 이미 있습니다. --config로 다른 이름을 지정하세요."
+                    )
+                manifest = inside(args.manifest)
+                rows = load_manifest(manifest)
+                if not rows:
+                    raise ValueError("입력이 비어 있습니다.")
+                for row in rows:
+                    inside(row["image"]["path"], manifest.parent)
+                output = inside(args.output or Path("runs") / args.provider)
+                write_json(
+                    config_path,
+                    {
+                        "schema_version": 1,
+                        "provider": args.provider,
+                        "manifest": os.path.relpath(manifest, config_path.parent),
+                        "output": os.path.relpath(output, config_path.parent),
+                        "model": None,
+                        "timeout": 300,
+                        "retries": 1,
+                    },
+                )
+                print(f"설정 저장: {config_path}\n다음: ./team --config {args.config} plan")
+                code = 0
+            else:
+                config = settings(args.config)
+                output = Path(config["output"])
+                managed = coordination.state_path(ROOT, inside(args.config)).exists()
+                if managed:
+                    coordination.validate_assignment(ROOT, inside(args.config))
+                if args.command == "doctor":
+                    code = call("doctor", "--provider", config["provider"])
+                elif args.command in ("plan", "run"):
+                    options = [
+                        "generate",
+                        "--manifest",
+                        config["manifest"],
+                        "--provider",
+                        config["provider"],
+                        "--output",
+                        output,
+                        "--timeout",
+                        config["timeout"],
+                        "--retries",
+                        config["retries"],
+                    ]
+                    if config.get("model"):
+                        options.extend(["--model", config["model"]])
+                    if args.command == "plan":
+                        options.append("--dry-run")
+                    elif args.limit is not None:
+                        options.extend(["--limit", args.limit])
+                    if args.command == "run" and managed:
+                        coordination.synchronize(ROOT, inside(args.config), phase="running")
+                        try:
+                            code = call(
+                                *options, progress=coordination.heartbeat(ROOT, inside(args.config))
+                            )
+                        finally:
+                            coordination.synchronize(ROOT, inside(args.config), phase="paused")
+                    else:
+                        code = call(*options)
+                elif args.command == "review":
+                    code = call("review", "--run", output, "--output", output / "review")
+                    if not code:
+                        print(f"검수 화면: {output / 'review/review.html'}")
+                elif args.command == "status":
+                    code = call("summary", "--run", output)
+                else:
+                    suffix = f"-{time.time_ns()}" if managed else ""
+                    destination = inside(
+                        args.output or Path("dist") / f"{output.name}-results{suffix}.zip"
+                    )
+                    packaged = bundle_run(output, destination)
+                    print(json.dumps(packaged, ensure_ascii=False, indent=2))
+                    if managed:
+                        coordination.synchronize(
+                            ROOT,
+                            inside(args.config),
+                            phase="submitted",
+                            archive={"name": destination.name, "sha256": packaged["sha256"]},
+                            result_url=args.result_url,
+                        )
+                    elif args.result_url:
+                        raise ValueError("--result-url은 공유 배정 작업에서 사용하세요.")
+                    code = 0
+    except (OSError, ValueError, KeyError, TypeError, EOFError) as exc:
         root.exit(2, f"오류: {exc}\nQUICKSTART.md와 docs/agent-manual.md를 확인하세요.\n")
     except KeyboardInterrupt:
         root.exit(130, "\n중단했습니다. 같은 run 명령으로 재개할 수 있습니다.\n")

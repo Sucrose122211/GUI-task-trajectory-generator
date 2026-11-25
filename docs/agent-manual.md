@@ -8,6 +8,18 @@ Read `AGENTS.md`, `QUICKSTART.md`, and this file before operating. Do not instal
 
 For `/사용법 담당자`, `/사용법 팀원`, or `$gui-trajectory-usage`, read `.agents/skills/gui-trajectory-usage/SKILL.md` and only the selected role reference. Return Korean step-by-step instructions with commands and expected artifacts; do not execute those commands merely because the user asked for usage. See `docs/usage-skill.md` for client invocation details. The Claude Code `/사용법` entrypoint routes to the same canonical skill.
 
+## Shared assignment (default team workflow)
+
+Read `docs/shared-assignment.md` for the complete coordinator setup. An owner creates a Sheet, pastes `apps-script/Code.gs`, runs setup, and deploys as owner with anonymous web-app access. A shared participation key is stored in Script Properties, never in tracked files. Workspace policies may prevent this deployment. Do not claim a real deployment was tested without an actual /exec endpoint.
+
+Create a portable catalog with `./pipeline campaign --manifest ... --name baseline-v1 --seed 42 --batch-size 30 --providers codex claude --output data/campaign.json`. Register it once with `./team register --campaign ... --url ...`. Workers prepare the same full dataset independently, then `join --campaign ... --manifest ... --url ... --worker member-a --provider codex`, `acquire`, `doctor`, `plan`, `run`, `submit`, `acquire`. `join` prompts for the key or reads `GUI_TEAM_KEY`. Workers do not edit Sheets or score CSVs.
+
+The catalog checks paths-independent data identity, image hashes, whole-screen groups, prompt/schema and partition version. Each batch/provider is one task. Apps Script holds a ScriptLock across claim and state mutations; repeated acquire by the same worker/provider returns their active claim. CLI defaults remain in force. A local per-config flock prevents overlapping commands. `.team/` contains keys and claims and is excluded from Git and all archives. It must remain for resume.
+
+Run polls cumulative latest results and updates Sheets at start, approximately every 30 seconds and on exit. Only offline/network failures are deferred; explicit rejected claims abort. A durable pending update is retried on run, sync or acquire. No new offline acquisition is allowed. `generated` means all responses exist, not human acceptance. `submit` creates a local ZIP and records its name/hash automatically; full completion yields `submitted`, partial completion cannot unlock the next task. Submitted means locally packaged, not uploaded or human-reviewed. Actual ZIP transfer remains separate; `submit --result-url https://...` records a supplied link without editing the sheet. Submitted tasks remain terminal during repeat run/sync. Unstarted tasks can be returned; no automatic expiry or reassignment of partial work is implemented.
+
+`campaign.py` builds and validates catalogs; `coordination.py` handles HTTP, allocation state and cumulative progress; `apps-script/Code.gs` is the deployed service. Tests use fake teachers/HTTP and a Node-based Apps Script mock, not Google credentials or live models. `make check` includes both Python and JavaScript tests in containers.
+
 ## Entrypoints
 
 Clone https://github.com/Sucrose122211/GUI-task-trajectory-generator.git and run commands from the checkout root. `./team` changes to that root so relative arguments have a single base. It uses host Python 3.10+ and its standard library. `./pipeline doctor` and `generate` also run on the host to reuse existing CLI authentication. Other `pipeline` commands use the backend selected by `./team setup`: `--backend local` creates `.venv` and installs pinned Pillow from `requirements-local.txt`; `--backend docker` builds the project image. The choice is saved in ignored `.pipeline-backend`. Without a saved choice, setup and pipeline default to Docker for compatibility. A later `./team setup` reuses the saved backend. Local mode requires Python venv/pip and initial download access, needs no activation, and never invokes Docker. Teacher commands always use host Python and existing CLI authentication. System Python packages are unchanged. Keep input, image, configuration and output paths inside this root; external paths are not mounted. A dataset can be prepared and bundled in another checkout before transfer.
@@ -83,7 +95,7 @@ runs/<name>/
 
 `state=completed`, teacher `status=ok`, and `validation.valid=true` are separate signals. None substitutes for human review. `status` reports automatic result categories, not human acceptance counts. `review` preserves previous CSV decisions and adds new jobs. `submit` preserves the latest results, all assigned inputs and their original images, run settings and optional `review/scores.csv`; it excludes private CLI logs, attempt history and authentication. A submission may be partial or include failures; inspect result counts before calling it complete. ZIPs include `BUNDLE.json` and `SHA256SUMS.txt`.
 
-## Coordinator workflow
+## Manual assignment compatibility and result collection
 
 ```bash
 ./pipeline shard --manifest data/custom/manifest.jsonl --count 3 --output data/shards

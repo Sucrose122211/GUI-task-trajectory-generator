@@ -1,6 +1,7 @@
 __pycache__/
 .venv/
 .pipeline-backend
+.team/
 *.py[cod]
 *.egg-info/
 .ruff_cache/
