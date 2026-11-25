@@ -4,7 +4,7 @@
 
 ## 1. 포함된 예제로 변환 확인
 
-프로그램에는 저장과 취소 버튼이 있는 합성 화면 한 장과 지시문 두 개가 있습니다. 실제 벤치마크나 학습 데이터가 아닌 설치 확인용 예제입니다. 먼저 `./team setup`을 실행하세요.
+프로그램에는 저장과 취소 버튼이 있는 합성 화면 한 장과 지시문 두 개가 있습니다. 실제 벤치마크나 학습 데이터가 아닌 설치 확인용 예제입니다. 먼저 Docker 없이 사용하려면 `./team setup --backend local`을, Docker를 사용하려면 `./team setup --backend docker`를 실행하세요. 이후 변환 명령은 같습니다.
 
 ```bash
 ./pipeline prepare --adapter mapped \

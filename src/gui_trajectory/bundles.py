@@ -25,6 +25,7 @@ SOURCE_FILES = (
     "Makefile",
     "pyproject.toml",
     "requirements-dev.txt",
+    "requirements-local.txt",
     "docs/pipeline-usage.md",
     "docs/agent-manual.md",
     "docs/dataset-adaptation.md",

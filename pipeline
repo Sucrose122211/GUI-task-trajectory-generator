@@ -8,6 +8,28 @@ case "${1:-help}" in
     exec python3 -m gui_trajectory "$@"
     ;;
   *)
+    BACKEND=docker
+    if [ -f "$ROOT/.pipeline-backend" ]; then
+      BACKEND=$(cat "$ROOT/.pipeline-backend")
+    fi
+    case "$BACKEND" in
+      local)
+        if [ ! -x "$ROOT/.venv/bin/python" ]; then
+          echo '먼저 ./team setup --backend local을 실행하세요.' >&2
+          exit 2
+        fi
+        exec "$ROOT/.venv/bin/python" -m gui_trajectory "$@"
+        ;;
+      docker) ;;
+      *)
+        echo '실행 환경 설정 오류. ./team setup --backend local 또는 docker로 다시 준비하세요.' >&2
+        exit 2
+        ;;
+    esac
+    if ! command -v docker >/dev/null 2>&1; then
+      echo 'Docker가 없습니다. ./team setup --backend local로 준비할 수 있습니다.' >&2
+      exit 2
+    fi
     exec docker run --rm --user "$(id -u):$(id -g)" \
       -v "$ROOT:$ROOT" -w "$ROOT" \
       gui-trajectory:0.1 "$@"

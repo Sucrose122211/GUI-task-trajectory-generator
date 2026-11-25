@@ -3,7 +3,10 @@
 - The active scope is the text trajectory baseline. Pilot: 30 ScreenSpot-v2 inputs,
   two subscription CLI teachers, English output. Keep ScreenSpot-Pro for evaluation.
 - Use `./pipeline` for project commands. `doctor` and `generate` run on the host
-  with existing user CLI authentication; other commands run in the project container.
+  with existing user CLI authentication; other commands use the selected backend
+  (Docker by default, or project `.venv` after
+  `./team setup --backend local`). Local mode installs only pinned project dependencies
+  into `.venv`, never system Python packages. Keep development checks in the container.
 - Build the container with `docker build -t gui-trajectory:0.1 .`.
 - Check changes with `make check`: Ruff lint/format, meaningful unit and integration
   tests, and a wheel build all run in the container. Do not install host packages.

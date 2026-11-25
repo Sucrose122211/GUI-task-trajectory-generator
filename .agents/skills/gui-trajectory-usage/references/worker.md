@@ -8,14 +8,16 @@
 
 ## 2. 저장소와 환경 준비
 
-Linux 또는 WSL에서 Git, Python 3.10 이상, 실행 중인 Docker, 사용할 교사의 CLI와 구독 로그인을 준비한다. WSL을 사용하면 CLI 설치와 로그인도 WSL 안에서 한다.
+Linux 또는 WSL에서 Git, Python 3.10 이상, 사용할 교사의 CLI와 구독 로그인을 준비한다. Docker 없이 실행하려면 Python의 venv와 pip가 필요하다. WSL을 사용하면 CLI 설치와 로그인도 WSL 안에서 한다.
 
 ```bash
 git clone https://github.com/Sucrose122211/GUI-task-trajectory-generator.git
 cd GUI-task-trajectory-generator
-./team setup
+./team setup --backend local
 git rev-parse HEAD
 ```
+
+로컬 실행은 저장소의 `.venv`에만 라이브러리를 설치한다. 가상환경 활성화는 필요 없다. Docker를 사용하려면 `./team setup --backend docker`를 실행한다. 선택을 기억하므로 업데이트 후에는 `./team setup`으로 같은 환경을 갱신한다.
 
 담당자가 전달한 커밋과 대조한다. 이미 clone했다면 저장소 루트에서 이후 명령을 실행한다. Codex는 `codex login`, Claude는 `claude` 실행 후 자기 구독 계정으로 로그인한다. 인증 정보를 제출하지 않는다.
 

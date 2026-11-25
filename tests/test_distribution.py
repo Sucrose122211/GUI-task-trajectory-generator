@@ -8,6 +8,7 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 from PIL import Image
 
@@ -16,6 +17,7 @@ from gui_trajectory.data import prepare
 from gui_trajectory.io import file_digest, image_path, load_manifest, read_json, write_json
 from gui_trajectory.operations import merge
 from gui_trajectory.runner import generate
+from gui_trajectory.team import setup
 
 PROJECT = Path(__file__).resolve().parents[1]
 
@@ -136,7 +138,32 @@ class DistributionTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "hash mismatch"):
             merge(incoming, self.root / "invalid-merge")
 
+    def test_local_setup_remembers_backend_only_after_success(self):
+        with (
+            patch("gui_trajectory.team.ROOT", self.root),
+            patch("gui_trajectory.team.subprocess.run", return_value=Mock(returncode=0)) as run,
+        ):
+            self.assertEqual(setup("local"), 0)
+            self.assertEqual((self.root / ".pipeline-backend").read_text(), "local\n")
+            self.assertEqual(run.call_args_list[0].args[0][1:3], ["-m", "venv"])
+            self.assertEqual(run.call_args_list[1].args[0][0], str(self.root / ".venv/bin/python"))
+            run.reset_mock()
+            self.assertEqual(setup(), 0)
+            self.assertEqual(run.call_count, 2)
+            run.return_value = Mock(returncode=1)
+            self.assertEqual(setup("docker"), 1)
+            self.assertEqual((self.root / ".pipeline-backend").read_text(), "local\n")
+            run.return_value = Mock(returncode=0)
+            self.assertEqual(setup("docker"), 0)
+            self.assertEqual((self.root / ".pipeline-backend").read_text(), "docker\n")
+
     def test_release_and_wrapper_in_clean_extracted_directory_with_spaces(self):
+        self.wrapper_workflow("docker")
+
+    def test_local_wrapper_workflow_never_calls_docker(self):
+        self.wrapper_workflow("local")
+
+    def wrapper_workflow(self, backend):
         archive = self.root / "software.zip"
         release(PROJECT, archive)
         with zipfile.ZipFile(archive) as zipped:
@@ -157,6 +184,8 @@ class DistributionTest(unittest.TestCase):
             ):
                 self.assertIn(f".agents/skills/gui-trajectory-usage/{relative}", names)
             self.assertIn("QUICKSTART.md", names)
+            self.assertIn("requirements-local.txt", names)
+            self.assertFalse(any(n.startswith(".venv/") or n == ".pipeline-backend" for n in names))
             self.assertIn("examples/demo/images/toolbar.png", names)
             self.assertEqual(zipped.getinfo("software/team").external_attr >> 16 & 0o111, 0o111)
             self.assertEqual(
@@ -188,9 +217,47 @@ class DistributionTest(unittest.TestCase):
                 capture_output=True,
             )
             self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
-            return result.stdout
+            return result.stdout if expected == 0 else result.stdout + result.stderr
 
-        invoke("setup")
+        if backend == "docker":
+            invoke("setup")
+        else:
+            # Exercise actual local subprocess routing, with test dependencies already installed.
+            # Environment creation and backend persistence are checked separately above.
+            local_python = project / ".venv/bin/python"
+            local_python.parent.mkdir(parents=True)
+            local_python.symlink_to(sys.executable)
+            selection = project / ".pipeline-backend"
+            selection.write_text("local\n")
+            docker.write_text("#!/bin/sh\necho 'Unexpected Docker call' >&2\nexit 99\n")
+            converted = subprocess.run(
+                [
+                    str(project / "pipeline"),
+                    "prepare",
+                    "--adapter",
+                    "mapped",
+                    "--annotations",
+                    str(project / "examples/demo/annotations.json"),
+                    "--image-root",
+                    str(project / "examples/demo/images"),
+                    "--mapping",
+                    str(project / "examples/demo/mapping.json"),
+                    "--dataset",
+                    "synthetic/demo",
+                    "--revision",
+                    "test",
+                    "--role",
+                    "pilot_dev",
+                    "--output",
+                    str(project / "data/demo/manifest.jsonl"),
+                ],
+                cwd=project,
+                env=self.env,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(converted.returncode, 0, converted.stdout + converted.stderr)
+            self.assertEqual(len(load_manifest(project / "data/demo/manifest.jsonl")), 2)
         for provider in ("codex", "claude"):
             config = f"jobs/{provider}.json"
             options = ("--config", config)
@@ -233,6 +300,16 @@ class DistributionTest(unittest.TestCase):
             )
             self.assertTrue(saved.is_file())
         self.assertEqual(self.counter.read_text(), "6")
+        if backend == "local":
+            selection.write_text("invalid\n")
+            self.assertIn(
+                "실행 환경 설정 오류", invoke("--config", "jobs/codex.json", "status", expected=2)
+            )
+            selection.write_text("local\n")
+            local_python.unlink()
+            self.assertIn(
+                "setup --backend local", invoke("--config", "jobs/codex.json", "status", expected=2)
+            )
         invoke("--config", "jobs/codex.json", "run", "--limit", "0", expected=2)
         config = project / "jobs/codex.json"
         changed = read_json(config)

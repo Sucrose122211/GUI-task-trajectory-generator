@@ -4,13 +4,15 @@ GUI 화면, 태스크, 정답을 Codex 또는 Claude의 구독 기반 CLI에 제
 
 ## 시작하기
 
-Linux 또는 WSL에서 Git, Python 3.10 이상, Docker와 사용할 교사의 CLI 및 구독 로그인이 필요하다.
+Linux 또는 WSL에서 Git, Python 3.10 이상과 사용할 교사의 CLI 및 구독 로그인이 필요하다. Docker가 없으면 아래 로컬 실행을 선택한다.
 
 ```bash
 git clone https://github.com/Sucrose122211/GUI-task-trajectory-generator.git
 cd GUI-task-trajectory-generator
-./team setup
+./team setup --backend local
 ```
+
+저장소의 `.venv`에 이미지 처리 라이브러리만 설치한다. 시스템 Python 패키지는 변경하지 않으며 가상환경을 직접 활성화할 필요도 없다. Python의 `venv`와 `pip`, 최초 설치 시 인터넷 연결이 필요하다. Docker를 사용하려면 `./team setup --backend docker`를 실행한다. 선택은 이 컴퓨터의 저장소에 기억되며, 이후 `./team setup`은 같은 방식을 사용한다.
 
 담당 데이터는 `data/`에 둔 뒤 다음과 같이 실행한다. Claude를 사용하면 `--provider claude`를 선택한다.
 

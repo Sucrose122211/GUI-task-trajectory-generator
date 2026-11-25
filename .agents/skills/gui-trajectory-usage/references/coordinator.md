@@ -4,14 +4,16 @@
 
 ## 1. 저장소 접근과 공통 환경 준비
 
-팀원에게 저장소 접근 권한을 제공한다. 담당자와 팀원 모두 Linux 또는 WSL에서 Git, Python 3.10 이상과 실행 중인 Docker를 준비한다. 생성 팀원은 사용할 교사의 CLI와 구독 로그인이 추가로 필요하다.
+팀원에게 저장소 접근 권한을 제공한다. 담당자와 팀원 모두 Linux 또는 WSL에서 Git과 Python 3.10 이상을 준비한다. Docker 없이 실행하려면 Python의 venv와 pip가 필요하다. 생성 팀원은 사용할 교사의 CLI와 구독 로그인이 추가로 필요하다.
 
 ```bash
 git clone https://github.com/Sucrose122211/GUI-task-trajectory-generator.git
 cd GUI-task-trajectory-generator
-./team setup
+./team setup --backend local
 git rev-parse HEAD
 ```
+
+로컬 실행은 저장소의 `.venv`에만 라이브러리를 설치한다. 가상환경 활성화는 필요 없다. Docker를 사용하려면 `./team setup --backend docker`를 실행한다. 선택을 기억하므로 업데이트 후에는 `./team setup`으로 같은 환경을 갱신한다.
 
 이미 clone했다면 해당 폴더에서 작업한다. 출력된 커밋 값을 배정 안내에 기록해 팀원들이 같은 코드와 프롬프트를 쓰게 한다. 이후 명령은 저장소 루트에서 실행한다.
 

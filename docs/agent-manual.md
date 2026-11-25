@@ -4,16 +4,16 @@
 
 Generate concise English visual observations for GUI grounding from D(I, q, a): an original screenshot, an instruction, and a reference target. Outputs are demonstrations conditioned on the supplied answer, not independent predictions. Use an existing Codex ChatGPT or Claude subscription login. Default model selection remains with the CLI; `job.json` may optionally override `model`.
 
-Read `AGENTS.md`, `QUICKSTART.md`, and this file before operating. Do not install host packages, copy credentials, invoke API fallback, or run inference just to test changes. `setup`, `init`, `doctor`, `plan`, `review`, `status`, `submit`, `release`, and dataset conversion do not call a model. `run` does. Execute it only within the user's authorized input and quantity. Generation is sequential. Do not translate the original instruction or repair invalid annotations silently.
+Read `AGENTS.md`, `QUICKSTART.md`, and this file before operating. Do not install system Python packages, copy credentials, invoke API fallback, or run inference just to test changes. `setup`, `init`, `doctor`, `plan`, `review`, `status`, `submit`, `release`, and dataset conversion do not call a model. `run` does. Execute it only within the user's authorized input and quantity. Generation is sequential. Do not translate the original instruction or repair invalid annotations silently.
 
 For `/사용법 담당자`, `/사용법 팀원`, or `$gui-trajectory-usage`, read `.agents/skills/gui-trajectory-usage/SKILL.md` and only the selected role reference. Return Korean step-by-step instructions with commands and expected artifacts; do not execute those commands merely because the user asked for usage. See `docs/usage-skill.md` for client invocation details. The Claude Code `/사용법` entrypoint routes to the same canonical skill.
 
 ## Entrypoints
 
-Clone https://github.com/Sucrose122211/GUI-task-trajectory-generator.git and run commands from the checkout root. `./team` changes to that root so relative arguments have a single base. It uses host Python 3.10+ and its standard library. `./pipeline doctor` and `generate` also run on the host to reuse existing CLI authentication. Other `pipeline` commands run in the project Docker image, mounting the project root. Keep input, image, configuration and output paths inside this root; external paths are not mounted. A dataset can be prepared and bundled in another checkout before transfer.
+Clone https://github.com/Sucrose122211/GUI-task-trajectory-generator.git and run commands from the checkout root. `./team` changes to that root so relative arguments have a single base. It uses host Python 3.10+ and its standard library. `./pipeline doctor` and `generate` also run on the host to reuse existing CLI authentication. Other `pipeline` commands use the backend selected by `./team setup`: `--backend local` creates `.venv` and installs pinned Pillow from `requirements-local.txt`; `--backend docker` builds the project image. The choice is saved in ignored `.pipeline-backend`. Without a saved choice, setup and pipeline default to Docker for compatibility. A later `./team setup` reuses the saved backend. Local mode requires Python venv/pip and initial download access, needs no activation, and never invokes Docker. Teacher commands always use host Python and existing CLI authentication. System Python packages are unchanged. Keep input, image, configuration and output paths inside this root; external paths are not mounted. A dataset can be prepared and bundled in another checkout before transfer.
 
 ```bash
-./team setup
+./team setup --backend local
 ./team init --provider codex --manifest data/assignment-a/manifest.jsonl
 ./team doctor
 ./team plan
@@ -115,4 +115,4 @@ Export requires human `accept`, a nonempty reviewer, four integer scores of 1-2 
 
 First try `prepare --adapter mapped` as described in `docs/dataset-adaptation.md`. Add adapter code only if the source cannot be represented by field paths and explicit coordinates. Preserve original screenshots, provenance and coordinate semantics. Add meaningful fixture tests for a new format, including at least one invalid annotation.
 
-Run `make build` after changing package code because preprocessing uses the installed container package. Then `make check` runs Ruff lint/format, subprocess-level fake-teacher tests and a wheel build inside Docker. Do not use a real subscription for CI. Tests cover portable archive transfer and the wrapper workflow. Linux container checks are not proof of a separate physical WSL environment.
+For Docker mode, run `make build` after changing package code because preprocessing uses the installed container package. Local mode reads the checkout source directly; run `./team setup` after dependency changes. Then `make check` runs Ruff lint/format, subprocess-level fake-teacher tests and a wheel build inside Docker. Do not use a real subscription for CI. Tests cover portable archive transfer and the wrapper workflow. Linux container checks are not proof of a separate physical WSL environment.

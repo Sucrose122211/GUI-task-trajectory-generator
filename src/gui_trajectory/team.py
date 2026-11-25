@@ -51,13 +51,47 @@ def call(*args):
     ).returncode
 
 
+def setup(backend=None):
+    selection = ROOT / ".pipeline-backend"
+    backend = backend or (selection.read_text().strip() if selection.exists() else "docker")
+    if backend == "local":
+        environment = ROOT / ".venv"
+        commands = [
+            [sys.executable, "-m", "venv", str(environment)],
+            [
+                str(environment / "bin/python"),
+                "-m",
+                "pip",
+                "install",
+                "--disable-pip-version-check",
+                "--no-deps",
+                "-r",
+                str(ROOT / "requirements-local.txt"),
+            ],
+        ]
+    elif backend == "docker":
+        commands = [["docker", "build", "-t", "gui-trajectory:0.1", "."]]
+    else:
+        raise ValueError("./team setup --backend local 또는 docker로 실행 환경을 선택하세요.")
+    for command in commands:
+        code = subprocess.run(command, cwd=ROOT, check=False).returncode
+        if code:
+            return code
+    selection.write_text(backend + "\n")
+    print(f"준비 완료 ({backend}). QUICKSTART.md에 따라 ./team init을 실행하세요.")
+    return 0
+
+
 def parser():
     root = argparse.ArgumentParser(description="GUI trajectory 팀 실행 도구. 시작: QUICKSTART.md")
     root.add_argument(
         "--config", type=Path, default=Path("job.json"), help="작업 설정 (기본 job.json)"
     )
     sub = root.add_subparsers(dest="command")
-    sub.add_parser("setup", help="Docker 이미지 빌드, 호스트 패키지 설치 없음")
+    setup_command = sub.add_parser("setup", help="실행 환경 준비 (기본 Docker, 선택 후 기억)")
+    setup_command.add_argument(
+        "--backend", choices=("docker", "local"), help="local: 저장소의 .venv 사용, Docker 불필요"
+    )
     init = sub.add_parser("init", help="교사와 입력을 정해 작업 설정 만들기")
     init.add_argument("--provider", choices=("codex", "claude"), required=True)
     init.add_argument("--manifest", type=Path, required=True)
@@ -89,11 +123,7 @@ def main():
         root.exit(2, "Python 3.10 이상이 필요합니다.\n")
     try:
         if args.command == "setup":
-            code = subprocess.run(
-                ["docker", "build", "-t", "gui-trajectory:0.1", "."], cwd=ROOT, check=False
-            ).returncode
-            if not code:
-                print("준비 완료. QUICKSTART.md에 따라 ./team init을 실행하세요.")
+            code = setup(args.backend)
         elif args.command == "release":
             print(json.dumps(release(ROOT, inside(args.output)), ensure_ascii=False, indent=2))
             code = 0

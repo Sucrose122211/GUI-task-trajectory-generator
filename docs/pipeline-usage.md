@@ -14,16 +14,16 @@ ScreenSpot-v2의 30개 입력을 같은 조건으로 Codex와 Claude에 제공�
 
 ## 1. 환경 준비
 
-Linux 또는 WSL에서 Docker, Python 3.10 이상, 사용할 교사의 CLI가 필요하다. Docker 사용 권한을 먼저 확인한다. 사용자 계정의 Codex와 Claude Code는 구독으로 로그인하며, 프로그램은 인증 정보를 복사하거나 API key로 전환하지 않는다.
+Linux 또는 WSL에서 Python 3.10 이상, 사용할 교사의 CLI가 필요하다. Docker 없이 실행하려면 Python의 venv와 pip를 준비한다. 사용자 계정의 Codex와 Claude Code는 구독으로 로그인하며, 프로그램은 인증 정보를 복사하거나 API key로 전환하지 않는다.
 
 ```bash
-make build
+./team setup --backend local
 ./pipeline doctor
 ```
 
 `doctor`는 설치 버전, 구독 인증 방식, 필요한 실행 옵션만 확인하며 추론을 호출하지 않는다. `ready: true`는 실제 이미지 추론까지 성공했다는 뜻은 아니다.
 
-`doctor`와 `generate`는 기존 로그인에 접근하기 위해 호스트에서 실행한다. 추가 Python 패키지가 필요 없다. 나머지 명령은 프로젝트 컨테이너에서 실행한다. 호스트에 패키지를 설치하지 않는다.
+`doctor`와 `generate`는 기존 로그인에 접근하기 위해 호스트에서 실행한다. 추가 Python 패키지가 필요 없다. 나머지 명령은 선택한 실행 환경을 사용한다. `./team setup --backend local`은 저장소의 `.venv`에 `requirements-local.txt`의 Pillow만 설치하며 Docker를 호출하지 않는다. 가상환경 활성화는 필요 없다. 최초 설치에는 인터넷 연결이 필요하며 시스템 Python 패키지를 변경하지 않는다. Docker를 사용하려면 `./team setup --backend docker`를 실행한다. 선택은 Git에서 제외한 `.pipeline-backend`에 저장하고, 이후 인자 없는 `./team setup`은 같은 방식을 유지한다. 설정이 없을 때의 기본은 기존 Docker 방식이다. 설치 실패 시 이전 선택을 유지한다. Python에 venv 또는 pip가 없다면 해당 기능을 제공하는 Python 환경이나 Docker를 준비해야 하며 시스템 패키지를 자동 설치하지 않는다.
 
 ## 2. ScreenSpot-v2 준비
 
