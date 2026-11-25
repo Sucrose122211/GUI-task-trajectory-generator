@@ -25,12 +25,26 @@ CLI 설치가 필요한 경우 [Codex 공식 안내](https://developers.openai.c
 
 ## 2. 전체 데이터 준비와 참여
 
-담당자에게 전체 데이터 준비 방법, 공통 `campaign.json`, Apps Script `/exec` URL, 참여 코드와 사용할 교사를 받습니다. 데이터셋과 revision 및 변환 설정은 모두 같아야 합니다. 담당자 최초 준비는 [공유 배정 안내](docs/shared-assignment.md)에 있습니다. 팀원은 시트를 열거나 편집하지 않습니다.
+이번 실행은 ScreenSpot-v2 전체 유효 입력 1,271건, seed 42, 8묶음입니다. 약 4명이 하나씩 가져가며, Codex와 Claude를 모두 수집하므로 총 16작업입니다. 담당자에게 Apps Script `/exec` URL, 참여 코드, 서로 다른 팀원 ID와 사용할 교사를 받습니다. 데이터셋과 revision 및 변환 설정은 모두 같아야 합니다. 담당자 최초 준비는 [공유 배정 안내](docs/shared-assignment.md)에 있습니다. 팀원은 시트를 열거나 편집하지 않습니다.
 
-아래는 경로 예시입니다. 실제 받은 경로와 URL로 바꾸세요.
+전체 데이터와 작업 목록은 각자 다음과 같이 준비합니다. 기존에 같은 파일이 있으면 재사용합니다. campaign 파일은 이미 있으면 다시 만들지 않습니다. 기존 연결 확인용 합성 예제와 이전 30건 표본을 사용하지 않습니다.
 
 ```bash
-./team join --campaign data/campaign.json --manifest data/full/manifest.jsonl \
+./pipeline fetch-screenspot \
+  --revision 5efbb1f1b5463a575f2eb7bc30fe29e49c15f93c --output data/screenspot-v2
+./pipeline prepare --adapter screenspot_v2 \
+  --annotations data/screenspot-v2 --image-root data/screenspot-v2/images \
+  --dataset OS-Copilot/ScreenSpot-v2 --source-info data/screenspot-v2/source.json \
+  --role pilot_dev --output data/screenspot-v2/manifest.jsonl
+./pipeline campaign --manifest data/screenspot-v2/manifest.jsonl \
+  --name screenspot-v2-team8-v1 --seed 42 --batch-count 8 \
+  --providers codex claude --output data/screenspot-v2/campaign-team8.json
+```
+
+변환은 valid 1,271건과 invalid 1건, 분할은 159건 7묶음과 158건 1묶음입니다. 담당자는 같은 catalog를 시트에 한 번 register해야 합니다. [전체 팀 가이드](docs/screenspot-team-run.md)에 등록, 4명 교사 구성 예시와 취합까지 설명했습니다. 아래 URL과 팀원 ID 및 교사는 실제 전달받은 값으로 바꿉니다.
+
+```bash
+./team join --campaign data/screenspot-v2/campaign-team8.json --manifest data/screenspot-v2/manifest.jsonl \
   --url '배포된_HTTPS_EXEC_URL' --worker member-a --provider codex
 ./team acquire
 ./team doctor
@@ -76,7 +90,7 @@ join 안내에 참여 코드를 입력합니다. 화면에 표시되지 않으�
 | 로컬 설치 시 venv / ensurepip 오류 | Python의 venv와 pip가 제공되는 환경을 준비하거나 Docker 방식 선택. 프로그램이 시스템 패키지를 자동 설치하지는 않음 |
 | 에이전트에게 실행 맡기기 | [에이전트 안내](docs/agent-manual.md)를 읽도록 지시 |
 
-평가용 ScreenSpot-v2 파일럿은 `pilot_dev`로 유지합니다. 대량 생성 데이터셋과 분담량은 팀에서 정합니다. 이 프로그램은 교사 데이터 생성까지 제공하며 학생 모델 학습은 포함하지 않습니다.
+이번 ScreenSpot-v2 전체 생성도 `pilot_dev`로 유지하고 SFT 학습에서 제외합니다. 인원수와 관계없이 8묶음을 유지하며 같은 입력의 두 교사 작업을 모두 수집합니다. 이 프로그램은 교사 데이터 생성까지 제공하며 학생 모델 학습은 포함하지 않습니다.
 
 ## 코드 업데이트
 

@@ -153,6 +153,24 @@ class CoordinationTest(unittest.TestCase):
         self.assertEqual(len(set(ids)), 16)
         self.assertEqual(set(ids), {r["sample_id"] for r in load_manifest(manifest)})
         self.assertEqual(len(catalog["batches"]), 8)
+        counted = build_campaign(manifest, "counted", batch_count=3)
+        self.assertEqual(sorted(len(b["sample_ids"]) for b in counted["batches"]), [4, 6, 6])
+        owners = {sample: b["batch_id"] for b in counted["batches"] for sample in b["sample_ids"]}
+        self.assertEqual(len(owners), 16)
+        screen_owners = {}
+        for row in load_manifest(manifest):
+            screen_owners.setdefault(row["group_id"], set()).add(owners[row["sample_id"]])
+        self.assertTrue(all(len(owners) == 1 for owners in screen_owners.values()))
+        output = self.root / "data/count8.json"
+        result = create_campaign(manifest, output, "eight", batch_count=8)
+        self.assertEqual(result["sizes"], [2] * 8)
+        self.assertEqual(result["tasks"], 16)
+        self.assertEqual(load_campaign(output, manifest)["partition_version"], 2)
+        write_jsonl(manifest, list(reversed(load_manifest(manifest))))
+        self.assertEqual(build_campaign(manifest, "eight", batch_count=8), load_campaign(output))
+        for invalid in (0, -1, 9):
+            with self.assertRaises(ValueError):
+                build_campaign(manifest, "invalid", batch_count=invalid)
 
     def test_offline_progress_durable_and_no_offline_allocation(self):
         self.join()

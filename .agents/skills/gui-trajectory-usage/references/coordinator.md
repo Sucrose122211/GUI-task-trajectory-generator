@@ -4,68 +4,62 @@
 
 ## 1. 저장소와 데이터 준비
 
-Linux 또는 WSL에서 저장소를 clone하고 team setup --backend local을 실행한다. Git 커밋을 기록하고 모두 같은 코드 버전을 사용한다. Docker 방식도 지원한다. 생성 데이터셋과 고정 revision은 팀이 정한다. ScreenSpot-v2는 pilot_dev로 유지한다. docs/dataset-adaptation.md에 따라 전체 데이터를 다운로드하고 변환한다. 팀원도 같은 원본과 명령으로 전체 manifest를 준비한다.
+Linux 또는 WSL에서 저장소를 clone하고 team setup --backend local을 실행한다. Git 커밋을 기록하고 모두 같은 코드 버전을 사용한다. Docker 방식도 지원한다. 이번 데이터셋은 ScreenSpot-v2 전체 유효 입력 1,271건, revision 5efbb1f1b5463a575f2eb7bc30fe29e49c15f93c로 정해졌다. seed 42와 batch-count 8을 사용한다. 초기 30건 표본은 이번 작업 범위가 아니다. ScreenSpot-v2는 pilot_dev로 유지한다. docs/screenspot-team-run.md의 고정 명령으로 전체 데이터를 다운로드하고 변환한다. 팀원도 같은 원본과 명령으로 전체 manifest를 준비한다.
 
 ## 2. 공유 시트 최초 설정
 
-Google Sheets를 새로 만들고 확장 프로그램 → Apps Script를 연다. apps-script/Code.gs를 붙여넣고, 프로젝트 설정에서 manifest 표시를 켠 뒤 apps-script/appsscript.json도 반영한다. setup 함수를 한 번 실행하여 권한을 승인한다. Campaigns와 Tasks 탭이 생기며, 프로젝트 설정의 Script properties에 SHEET_ID와 TEAM_KEY가 자동 생성된다. 참여 코드는 로그나 문서에 넣지 말고 별도 전달한다.
+기존 배포와 연결 확인이 끝났으면 이 절을 반복하지 않고 새 campaign 등록으로 진행한다. 이번 로컬 분할 옵션 변경에 Apps Script 재배포는 필요 없다. 새 환경이라면 Google Sheets를 새로 만들고 확장 프로그램 → Apps Script를 연다. apps-script/Code.gs를 붙여넣고, 프로젝트 설정에서 manifest 표시를 켠 뒤 apps-script/appsscript.json도 반영한다. setup 함수를 한 번 실행하여 권한을 승인한다. Campaigns와 Tasks 탭이 생기며, 프로젝트 설정의 Script properties에 SHEET_ID와 TEAM_KEY가 자동 생성된다. 참여 코드는 로그나 문서에 넣지 말고 별도 전달한다.
 
 웹 앱으로 새 배포하고 실행 사용자는 본인, 접근은 모든 사용자로 선택한다. /exec URL을 사용한다. Workspace 정책상 이 배포가 불가능하면 관리자 허용 또는 다른 계정이 필요하다. 정확한 화면별 절차는 docs/shared-assignment.md를 읽는다. 실제 배포가 끝나지 않았다면 끝났다고 말하지 않는다.
 
 ## 3. 고정 작업 목록과 시트 등록
 
-아래는 실제 데이터의 경로 예시다.
+팀원과 담당자가 같은 전체 데이터에서 아래 명령으로 catalog를 재현한다. 실제 로컬 검증 결과는 159건 7묶음과 158건 1묶음이다. 8묶음 × 2교사이므로 시트 작업은 16개, 전체 응답 계획은 2,542건이다.
 
 ```bash
-./pipeline campaign --manifest data/full/manifest.jsonl --name baseline-v1 \
-  --seed 42 --batch-size 30 --providers codex claude --output data/campaign.json
-./team register --campaign data/campaign.json --url '배포된_HTTPS_EXEC_URL'
+./pipeline campaign --manifest data/screenspot-v2/manifest.jsonl --name screenspot-v2-team8-v1 \
+  --seed 42 --batch-count 8 --providers codex claude --output data/screenspot-v2/campaign-team8.json
+./team register --campaign data/screenspot-v2/campaign-team8.json --url '배포된_HTTPS_EXEC_URL'
 ```
 
-register의 숨김 입력으로 참여 코드를 넣는다. 같은 화면은 나누지 않으며 한 묶음이 30개를 넘을 수 있다. 각 묶음에 교사별 작업이 생긴다. 한 교사만 수집하면 providers를 하나로 지정한다. 같은 실험 재등록은 진행을 보존하고 설정이 다른 재등록은 거절한다. 변경은 새 실험 이름으로 한다.
+register의 숨김 입력으로 참여 코드를 넣는다. 같은 화면은 나누지 않고 정확히 8개의 비어 있지 않은 묶음을 만든다. batch-size 30을 동시에 쓰지 않는다. 각 묶음에 교사별 작업이 생긴다. 한 교사만 수집하면 providers를 하나로 지정한다. 같은 실험 재등록은 진행을 보존하고 설정이 다른 재등록은 거절한다. 변경은 새 실험 이름으로 한다.
 
 ## 4. 팀원에게 전달
 
-저장소와 공통 커밋, 전체 데이터 다운로드 및 변환 명령, campaign 파일, /exec URL과 별도 참여 코드, 중복되지 않는 팀원 ID와 교사, 실제 결과 ZIP 전달 위치를 안내한다. 팀원은 join, acquire, doctor, plan, 제한 run과 전체 run, submit, acquire로 진행한다. 시트 편집 권한이나 수동 진행 기록을 요구하지 않는다.
+저장소와 공통 커밋, 전체 데이터 다운로드 및 변환 명령, campaign 파일, /exec URL과 별도 참여 코드, 중복되지 않는 팀원 ID와 교사, 실제 결과 ZIP 전달 위치를 안내한다. 팀원은 join, acquire, doctor, plan, 제한 run과 전체 run, submit, acquire로 진행한다. 시트 편집 권한이나 수동 진행 기록을 요구하지 않는다. 약 4명으로 운영하며 Codex 2명과 Claude 2명은 교사 구독에 맞춘 구성 예시다. 사람별 입력을 고정하지 않고 먼저 끝낸 사람이 자기 교사의 다음 작업을 받는다.
 
 ## 5. 진행과 결과 수령
 
 시트는 담당자, 작업 번호, 교사, 전체 및 완료, 실패, 자동 유효 건수, 마지막 갱신과 ZIP 이름을 자동 표시한다. submitted는 로컬 ZIP 생성 완료이므로 실제 파일을 수령했는지 별도 확인한다. 사람 검수 통과가 아니다. 오래 멈춘 배정은 담당자와 소통해 재개하며 자동 회수는 없다. 결과가 없는 배정은 팀원의 team return으로 반납할 수 있다. 행을 임의로 수정하지 않는다.
 
-이후는 아래의 기존 ZIP 취합과 최종 검수 절차를 사용한다. member-a.zip 등의 이름은 실제 받은 ZIP명으로 바꾼다. 팀원은 점수표를 작성하지 않고 담당자가 병합 후 최종 검수한다.
+이후는 아래의 기존 ZIP 취합과 최종 검수 절차를 사용한다. ZIP은 사람별 4개가 아니라 교사별 작업마다 만들어져 전량 기준 16개다. 실제 받은 파일명으로 취합하고 같은 작업의 재제출은 최신 버전만 선택한다. 팀원은 점수표를 작성하지 않고 담당자가 병합 후 최종 검수한다.
 
 ## 6. 제출 파일 수령과 압축 해제
 
-팀원은 `team submit`으로 ZIP을 만들고 정해진 위치에 직접 전달한다. 담당자는 받은 파일을 `runs/incoming/`에 놓는다.
+이번 실험에서 선택한 최종 제출 ZIP만 runs/incoming/에 놓는다. demo, 이전 파일럿, 같은 작업의 옛 제출은 섞지 않는다. 폴더를 비운다는 이유로 기존 결과를 삭제하지 말고 다른 보관 폴더를 사용한다. 기본 예시는 이 경로가 이번 취합 전용일 때다.
 
 ```bash
 mkdir -p runs/incoming
-python3 -m zipfile -e runs/incoming/member-a.zip runs/incoming/
-python3 -m zipfile -e runs/incoming/member-b.zip runs/incoming/
-python3 -m zipfile -e runs/incoming/member-c.zip runs/incoming/
+for submission_zip in runs/incoming/*.zip; do
+  python3 -m zipfile -e "$submission_zip" runs/incoming/
+done
 ```
 
-내부 폴더명은 ZIP 생성 당시 파일명에 따라 `member-a`, `member-b`, `member-c`가 된다. ZIP 이름만 나중에 바꿨다면 실제 내부 폴더명을 확인해 아래 경로에 적용한다. 이전 제출을 유지하려면 재제출은 새 ZIP 이름과 새 내부 폴더명으로 받는다.
+내부 폴더명은 ZIP 생성 당시 파일명에서 확장자를 뺀 값이다. 받은 ZIP 이름만 바꿔도 내부 폴더명은 변하지 않는다. 출력된 폴더를 유지한다.
 
 ## 7. 배정 건수와 제출 결과 대조
 
-```bash
-./pipeline summary --run runs/incoming/member-a
-./pipeline summary --run runs/incoming/member-b
-./pipeline summary --run runs/incoming/member-c
-```
-
-`summary`는 저장된 결과만 집계한다. 이것만으로 아직 생성하지 않은 입력 수까지 알 수는 없다. `bundle-data` 때 기록한 배정 건수, 각 제출의 `BUNDLE.json`에 있는 `samples`와 `jobs`, 실패 집계를 대조한다. 하나의 교사에 배정한 입력 수와 작업 결과 수가 일치하는지 확인하고, 실패나 누락은 해당 팀원에게 재개 후 재제출을 요청한다. 하나의 assignment를 두 교사로 생성했다면 두 제출을 각각 확인한다.
+시트에서 screenspot-v2-team8-v1의 Codex 8작업과 Claude 8작업을 확인한다. demo 등록 행이 있으면 전체 시트 행 수와 혼동하지 않는다. 작업별 입력은 158개 또는 159개이며 교사별 1,271건, 전체 2,542건이다. 각 ZIP의 BUNDLE.json samples와 jobs 및 실패 수를 대조한다. submitted는 ZIP 생성 상태이므로 실제 파일 수령도 확인한다. 누락은 해당 팀원이 재개하고 다시 제출한다.
 
 ## 8. 결과 병합
 
+아래 glob은 runs/incoming/의 모든 하위 폴더가 이번 실험의 선택한 제출일 때만 사용한다. 다른 폴더가 섞여 있으면 --runs 뒤에 선택한 16개 경로만 명시한다.
+
 ```bash
-./pipeline merge \
-  --runs runs/incoming/member-a runs/incoming/member-b runs/incoming/member-c \
-  --output runs/merged
+./pipeline merge --runs runs/incoming/*/ --output runs/merged
 ```
 
-병합 대상은 새 폴더 또는 빈 폴더다. 원본 이미지 hash를 확인하고 동일한 작업의 같은 결과는 합친다. 같은 작업 ID의 서로 다른 결과는 충돌로 중단한다. 다른 교사 결과는 보존한다. 재제출 v2가 있으면 그 사람의 이전 제출을 함께 넣지 말고 사용할 버전을 선택한다. `runs/merged/manifest.jsonl`은 제출 폴더의 이미지를 참조하므로 `runs/incoming/`을 유지한다.
+대상은 새 폴더나 빈 폴더여야 한다. 같은 작업의 옛 제출과 v2를 동시에 넣지 않는다. 다른 교사 결과는 보존하고 같은 작업의 다른 결과는 충돌로 중단한다. 병합 manifest는 제출 폴더 이미지를 참조하므로 runs/incoming/을 유지한다.
 
 ## 9. 전체 최종 검수
 

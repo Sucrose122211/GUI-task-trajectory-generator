@@ -1,7 +1,11 @@
 # Repository workflow
 
-- The active scope is the text trajectory baseline. Pilot: 30 ScreenSpot-v2 inputs,
-  two subscription CLI teachers, English output. Keep ScreenSpot-Pro for evaluation.
+- The active scope is the text trajectory baseline. Initial pilot: 30 ScreenSpot-v2
+  inputs. Current team run: all 1,271 valid ScreenSpot-v2 inputs, seed 42, eight
+  batches via --batch-count 8, two subscription CLI teachers, English output.
+  About four workers claim dynamically; eight input batches create sixteen provider
+  tasks. Read docs/screenspot-team-run.md. Keep pilot_dev and reserve ScreenSpot-Pro
+  for evaluation.
 - Use `./pipeline` for project commands. `doctor` and `generate` run on the host
   with existing user CLI authentication; other commands use the selected backend
   (Docker by default, or project `.venv` after

@@ -17,11 +17,17 @@ def manifest_identity(rows):
     )
 
 
-def build_campaign(manifest, name, seed=42, batch_size=30, providers=("codex", "claude")):
+def build_campaign(
+    manifest, name, seed=42, batch_size=30, providers=("codex", "claude"), *, batch_count=None
+):
     if not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", name):
         raise ValueError("Campaign name must use 1-64 letters, digits, underscores or hyphens")
-    if type(seed) is not int or type(batch_size) is not int or batch_size < 1:
+    if type(seed) is not int or (
+        batch_count is None and (type(batch_size) is not int or batch_size < 1)
+    ):
         raise ValueError("Invalid campaign seed or batch size")
+    if batch_count is not None and (type(batch_count) is not int or batch_count < 1):
+        raise ValueError("Batch count must be positive")
     if (
         not providers
         or len(set(providers)) != len(providers)
@@ -40,27 +46,38 @@ def build_campaign(manifest, name, seed=42, batch_size=30, providers=("codex", "
         groups.setdefault(keys[row["sample_id"]], []).append(row["sample_id"])
     # Hash ordering avoids dependence on input order, machine paths or Python RNG versions.
     ordered = sorted(groups, key=lambda key: (digest([seed, key]), str(key)))
-    batches, part = [], []
-    for key in ordered:
-        group = sorted(groups[key])
-        if part and len(part) + len(group) > batch_size:
+    if batch_count is not None:
+        if batch_count > len(groups):
+            raise ValueError("Batch count exceeds the number of screen groups")
+        batches = [[] for _ in range(batch_count)]
+        # Largest groups first; seeded order breaks ties, preserving whole screens.
+        for key in sorted(ordered, key=lambda key: -len(groups[key])):
+            target = min(range(batch_count), key=lambda i: (len(batches[i]), i))
+            batches[target].extend(sorted(groups[key]))
+    else:
+        batches, part = [], []
+        for key in ordered:
+            group = sorted(groups[key])
+            if part and len(part) + len(group) > batch_size:
+                batches.append(part)
+                part = []
+            part.extend(group)
+        if part:
             batches.append(part)
-            part = []
-        part.extend(group)
-    if part:
-        batches.append(part)
     result = {
         "schema_version": 1,
-        "partition_version": 1,
+        "partition_version": 2 if batch_count is not None else 1,
         "campaign_id": name,
         "seed": seed,
-        "batch_size": batch_size,
+        "batch_size": None if batch_count is not None else batch_size,
         "providers": list(providers),
         "manifest_identity": manifest_identity(rows),
         "prompt_sha256": digest((RESOURCE / "teacher-v1.txt").read_text(encoding="utf-8")),
         "schema_sha256": digest(SCHEMA),
         "batches": [{"batch_id": f"{i:04d}", "sample_ids": part} for i, part in enumerate(batches)],
     }
+    if batch_count is not None:
+        result["batch_count"] = batch_count
     result["fingerprint"] = digest(result)
     return result
 
@@ -71,7 +88,7 @@ def load_campaign(path, manifest=None):
         {key: value for key, value in catalog.items() if key != "fingerprint"}
     ):
         raise ValueError("Campaign catalog fingerprint mismatch")
-    if catalog.get("schema_version") != 1 or catalog.get("partition_version") != 1:
+    if catalog.get("schema_version") != 1 or catalog.get("partition_version") not in (1, 2):
         raise ValueError("Unsupported campaign format")
     if catalog["prompt_sha256"] != digest(
         (RESOURCE / "teacher-v1.txt").read_text(encoding="utf-8")
@@ -84,19 +101,31 @@ def load_campaign(path, manifest=None):
             catalog["seed"],
             catalog["batch_size"],
             catalog["providers"],
+            batch_count=catalog.get("batch_count"),
         )
         if rebuilt != catalog:
             raise ValueError("Dataset, partition or prompt differs from this campaign")
     return catalog
 
 
-def create_campaign(manifest, output, name, seed=42, batch_size=30, providers=("codex", "claude")):
+def create_campaign(
+    manifest,
+    output,
+    name,
+    seed=42,
+    batch_size=30,
+    providers=("codex", "claude"),
+    *,
+    batch_count=None,
+):
     if Path(output).exists():
         raise ValueError("Campaign already exists; use a new filename")
-    catalog = build_campaign(manifest, name, seed, batch_size, providers)
+    catalog = build_campaign(manifest, name, seed, batch_size, providers, batch_count=batch_count)
     write_json(output, catalog)
     return {
         "campaign": str(output),
         "batches": len(catalog["batches"]),
+        "sizes": [len(batch["sample_ids"]) for batch in catalog["batches"]],
+        "tasks": len(catalog["batches"]) * len(catalog["providers"]),
         "fingerprint": catalog["fingerprint"],
     }

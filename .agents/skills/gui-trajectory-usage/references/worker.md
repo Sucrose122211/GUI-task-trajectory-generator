@@ -1,6 +1,6 @@
 # 팀원 사용법
 
-기본 절차는 공유 시트 자동 배정이다. 아래는 Codex 담당자 member-a의 예시이며 실제 데이터 경로와 URL로 바꾼다. 팀원은 시트나 점수 CSV를 편집하지 않는다.
+이번 실행은 ScreenSpot-v2 전체 유효 입력 1,271건, seed 42, 8묶음이다. 약 4명이 하나씩 가져가며 두 교사 기준으로 시트에는 총 16작업이 생긴다. 기본 절차는 공유 시트 자동 배정이다. 아래는 Codex 담당자 member-a의 예시이며 실제 데이터 경로와 URL로 바꾼다. 팀원은 시트나 점수 CSV를 편집하지 않는다.
 
 ## 1. 공통 정보 받기
 
@@ -15,19 +15,33 @@ cd GUI-task-trajectory-generator
 git rev-parse HEAD
 ```
 
-Linux 또는 WSL의 Python 3.10 이상, venv와 pip, 교사 CLI를 사용한다. 기존 clone이면 해당 폴더에서 작업한다. Docker를 선호하면 setup --backend docker를 사용한다. Codex는 codex login, Claude는 claude 실행 후 자기 구독으로 로그인한다. 담당자가 안내한 방법으로 전체 원본을 다운로드하고 공통 manifest로 변환한다. 경로 예시는 data/full/manifest.jsonl, campaign은 data/campaign.json이다. 임의 데이터셋을 자동 다운로드하는 명령은 없으므로 공통 데이터 준비 명령을 사용한다.
+Linux 또는 WSL의 Python 3.10 이상, venv와 pip, 교사 CLI를 사용한다. 기존 clone이면 해당 폴더에서 작업한다. Docker를 선호하면 setup --backend docker를 사용한다. Codex는 codex login, Claude는 claude 실행 후 자기 구독으로 로그인한다. 전체 데이터와 catalog는 각자 같은 명령으로 준비한다. 기존 catalog가 있으면 재생성하지 않는다. role은 pilot_dev이며 이전 30건 표본을 생성하지 않는다.
+
+```bash
+./pipeline fetch-screenspot --revision 5efbb1f1b5463a575f2eb7bc30fe29e49c15f93c \
+  --output data/screenspot-v2
+./pipeline prepare --adapter screenspot_v2 --annotations data/screenspot-v2 \
+  --image-root data/screenspot-v2/images --dataset OS-Copilot/ScreenSpot-v2 \
+  --source-info data/screenspot-v2/source.json --role pilot_dev \
+  --output data/screenspot-v2/manifest.jsonl
+./pipeline campaign --manifest data/screenspot-v2/manifest.jsonl \
+  --name screenspot-v2-team8-v1 --seed 42 --batch-count 8 --providers codex claude \
+  --output data/screenspot-v2/campaign-team8.json
+```
+
+변환은 유효 1,271건과 오류 1건, 입력 묶음은 159건 7개와 158건 1개다. 팀원 수로 다시 나누거나 개인별 시드를 선택하지 않는다. 자세한 내용은 docs/screenspot-team-run.md에 있다.
 
 ## 3. 최초 참여와 자동 배정
 
 ```bash
-./team join --campaign data/campaign.json --manifest data/full/manifest.jsonl \
+./team join --campaign data/screenspot-v2/campaign-team8.json --manifest data/screenspot-v2/manifest.jsonl \
   --url '배포된_HTTPS_EXEC_URL' --worker member-a --provider codex
 ./team acquire
 ./team doctor
 ./team plan
 ```
 
-join 때 참여 코드를 숨김 입력으로 한 번 받는다. Claude는 --provider claude다. acquire가 빈 작업을 선점하고 job.json과 해당 입력을 만든다. 이미 진행 중이면 같은 배정을 반환한다. doctor와 plan까지는 모델을 호출하지 않는다. 이미 job.json이 있으면 --config jobs/member-a.json을 join 앞에 붙이고 이후 모든 명령에도 같은 --config를 붙인다. 원본 revision, 데이터와 프롬프트가 다르면 참여를 거절한다.
+join 때 참여 코드를 숨김 입력으로 한 번 받는다. Claude는 --provider claude다. acquire가 빈 작업을 선점하고 job.json과 해당 입력을 만든다. 이미 진행 중이면 같은 배정을 반환한다. doctor와 plan까지는 모델을 호출하지 않는다. 이미 job.json이 있으면 --config jobs/screenspot-team8.json을 join 앞에 붙이고 이후 모든 명령에도 같은 --config를 붙인다. 이전 연결 확인용 jobs/connection-check.json을 재사용하지 않는다. 출력에 기본 설정의 다음 명령이 표시되더라도 선택한 --config를 유지한다. 원본 revision, 데이터와 프롬프트가 다르면 참여를 거절한다.
 
 ## 4. 한 개 시험 후 전체 생성
 
@@ -56,7 +70,7 @@ run은 실제 구독을 사용한다. review가 알려주는 HTML을 열어 첫 
 ./team submit
 ```
 
-전량 생성 후 submit한 상태에서 acquire하면 다음 묶음을 가져온다. 진행 중이면 기존 묶음이다. 결과는 배정별 폴더에 보존한다. 연결이 끊겨도 이미 받은 입력은 로컬 생성이 가능하고 다음 run, sync 또는 acquire에서 동기화한다. 오프라인 신규 배정은 하지 않는다.
+전량 생성 후 submit한 상태에서 acquire하면 다음 묶음을 가져온다. 진행 중이면 기존 묶음이다. 인원별로 묶음을 미리 고정하지 않는다. 미배정 작업이 없다는 응답은 해당 교사에서 추가로 가져올 작업이 없다는 뜻이며 다른 사람의 작업 완료까지 보장하지 않는다. 결과는 배정별 폴더에 보존한다. 연결이 끊겨도 이미 받은 입력은 로컬 생성이 가능하고 다음 run, sync 또는 acquire에서 동기화한다. 오프라인 신규 배정은 하지 않는다.
 
 ```bash
 ./team sync

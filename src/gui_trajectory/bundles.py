@@ -32,6 +32,7 @@ SOURCE_FILES = (
     "docs/github-distribution.md",
     "docs/usage-skill.md",
     "docs/shared-assignment.md",
+    "docs/screenspot-team-run.md",
     "apps-script/Code.gs",
     "apps-script/appsscript.json",
     "tests/test_apps_script.cjs",

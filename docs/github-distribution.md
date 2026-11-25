@@ -28,6 +28,8 @@ gh repo create gui-trajectory --private
 
 ## 팀원에게 전달할 것
 
+이번 설정은 [ScreenSpot-v2 4명, 8묶음 가이드](screenspot-team-run.md)입니다. 같은 전체 데이터를 각자 준비하고 고정 seed 42와 batch-count 8로 catalog를 재현합니다. 8입력 묶음과 교사별 총 16작업을 구분하세요. 인원별로 입력을 4등분하지 않습니다.
+
 담당자는 [공유 시트 최초 설정](shared-assignment.md)을 한 번 진행합니다. 배정 행은 register로 자동 생성하고 이후 팀원들이 acquire로 작업을 선택합니다. 담당자별 입력 ZIP이나 배정표를 수동 작성할 필요가 없습니다.
 
 1. GitHub 저장소 URL, 접근 권한과 공통 코드 버전.

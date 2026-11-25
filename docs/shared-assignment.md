@@ -2,6 +2,12 @@
 
 팀원은 Google Sheets를 열거나 행을 편집하지 않습니다. 공통 시드와 버전으로 고정한 작업 목록에서 프로그램이 작업을 받고, 생성 중 진행과 종료 상태를 자동 기록합니다. 별도 서버, VPN, Google API SDK 설치는 필요 없습니다. 담당자는 최초 한 번 Google Sheets와 Apps Script 웹 앱을 준비합니다.
 
+## 이번 팀 설정
+
+현재는 ScreenSpot-v2 전체 유효 입력 1,271건, seed 42, `--batch-count 8`, 약 4명으로 운영합니다. Codex와 Claude를 모두 수집하므로 입력은 8묶음, 시트 작업은 16개입니다. [이번 ScreenSpot 팀 가이드](screenspot-team-run.md)에 고정 revision, 다운로드와 변환, 실제 분할 건수, 등록 및 팀원 명령이 있습니다. 아래 합성 예제는 초기 연결 확인용입니다.
+
+이미 Apps Script 배포와 demo register/join/acquire/plan을 확인한 경우 새 시트를 만들거나 재배포하지 않습니다. 새 ScreenSpot campaign만 등록하고 팀원이 참여하면 됩니다. 이 문서의 공통 동작은 모든 데이터셋에 적용됩니다.
+
 ## 담당자 1. 새 시트와 배정 서비스 만들기
 
 1. Google Drive에서 새 Google Sheets를 만듭니다. 이름 예: `GUI trajectory 작업 현황`.
@@ -19,7 +25,7 @@
 
 ## 담당자 2. 전체 데이터와 공통 실험 설정 만들기
 
-생성용 데이터셋은 팀에서 선정합니다. ScreenSpot-v2는 `pilot_dev`로 유지합니다. 먼저 [데이터 연결 안내](dataset-adaptation.md)에 따라 원본을 다운로드하고 공통 manifest로 변환합니다. 모든 팀원은 같은 원본 revision, 주석 파일명, 변환 설정과 코드 버전을 사용해야 합니다.
+이번 생성용 데이터셋은 ScreenSpot-v2이며 전체 입력도 `pilot_dev`로 유지합니다. 다른 데이터셋으로 바꿀 때는 별도 실험으로 준비합니다. 먼저 [데이터 연결 안내](dataset-adaptation.md)에 따라 원본을 다운로드하고 공통 manifest로 변환합니다. 모든 팀원은 같은 원본 revision, 주석 파일명, 변환 설정과 코드 버전을 사용해야 합니다.
 
 설치 확인용 합성 예제는 다음과 같습니다. 실제 데이터 생성과 구독 호출은 하지 않습니다.
 
@@ -35,7 +41,7 @@
   --providers codex claude --output data/demo/campaign.json
 ```
 
-`campaign.json`은 작업 번호와 입력 ID를 담은 공통 목록입니다. 원본 이미지, 컴퓨터 경로, 참여 코드를 포함하지 않습니다. 같은 화면 그룹은 나누지 않으므로 한 묶음의 입력 수가 `--batch-size`보다 커질 수 있습니다. 묶음마다 교사별 작업을 생성합니다. 교사 하나만 수집하면 `--providers codex` 또는 `--providers claude`를 사용합니다. 시드는 전체 목록을 나누는 공통 설정이며 팀원마다 바꾸지 않습니다.
+`campaign.json`은 작업 번호와 입력 ID를 담은 공통 목록입니다. 이번 실험은 `--batch-count 8`로 정확히 8묶음을 만들며, 아래 크기 기준 옵션과 동시에 쓰지 않습니다. count 방식 catalog는 partition_version 2이고 기존 크기 방식의 version 1도 지원합니다. 원본 이미지, 컴퓨터 경로, 참여 코드를 포함하지 않습니다. 같은 화면 그룹은 나누지 않으므로 한 묶음의 입력 수가 `--batch-size`보다 커질 수 있습니다. 묶음마다 교사별 작업을 생성합니다. 교사 하나만 수집하면 `--providers codex` 또는 `--providers claude`를 사용합니다. 시드는 전체 목록을 나누는 공통 설정이며 팀원마다 바꾸지 않습니다.
 
 실제 데이터에는 예제의 manifest와 실험 이름 및 출력 경로를 바꾸세요. 공통 campaign 파일은 저장소나 별도 파일로 팀원에게 전달할 수 있습니다. 데이터 원본은 각자 다운로드하거나 같은 전체 데이터 묶음을 받습니다. 담당자별 입력 ZIP을 만들 필요는 없습니다. 이 버전은 임의 데이터셋의 다운로드 방법을 자동 추정하지 않으며, 기존 변환기를 이용해 각자의 전체 manifest를 준비해야 합니다.
 

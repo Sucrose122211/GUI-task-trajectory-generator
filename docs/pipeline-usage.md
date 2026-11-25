@@ -1,16 +1,16 @@
 # 텍스트 trajectory 파이프라인 실행 안내
 
-ScreenSpot-v2의 30개 입력을 같은 조건으로 Codex와 Claude에 제공한다. 실제 모델을 지정하지 않으면 각 CLI의 기본 모델을 사용한다. 다른 데이터셋은 공통 manifest로 변환한 뒤 같은 생성 명령을 사용한다.
+초기 파일럿은 ScreenSpot-v2 30개였으며, 현재 팀 실행은 전체 유효 입력 1,271개를 8묶음으로 나눠 같은 조건의 Codex와 Claude에 제공한다. 약 4명이 작업을 하나씩 가져간다. 교사별 8개, 총 16작업이다. [이번 팀 실행 가이드](screenspot-team-run.md)를 우선 따른다. 실제 모델을 지정하지 않으면 각 CLI의 기본 모델을 사용한다. 다른 데이터셋은 공통 manifest로 변환한 뒤 같은 생성 명령을 사용한다.
 
 ## 공유 시트 자동 배정 (기본)
 
 담당자는 [최초 설정 안내](shared-assignment.md)에 따라 Google Sheets와 Apps Script를 한 번 배포하고, `./pipeline campaign`으로 만든 공통 작업 목록을 `./team register`로 등록한다. 팀원은 같은 전체 데이터를 준비한 뒤 `join → acquire → doctor → plan → run → submit → acquire`로 작업을 받는다. 팀원은 시트나 점수 CSV를 편집하지 않는다. run은 진행을 자동 기록하고, submit은 로컬 ZIP 생성 상태와 파일명을 자동 기록한다. 실제 파일 업로드와 담당자의 최종 검수는 별도다. 연결 장애는 로컬에 기록해 재동기화하며 신규 배정은 온라인에서만 허용한다.
 
 ```bash
-./pipeline campaign --manifest data/full/manifest.jsonl --name baseline-v1 \
-  --seed 42 --batch-size 30 --providers codex claude --output data/campaign.json
-./team register --campaign data/campaign.json --url '배포된_HTTPS_EXEC_URL'
-./team join --campaign data/campaign.json --manifest data/full/manifest.jsonl \
+./pipeline campaign --manifest data/screenspot-v2/manifest.jsonl --name screenspot-v2-team8-v1 \
+  --seed 42 --batch-count 8 --providers codex claude --output data/screenspot-v2/campaign-team8.json
+./team register --campaign data/screenspot-v2/campaign-team8.json --url '배포된_HTTPS_EXEC_URL'
+./team join --campaign data/screenspot-v2/campaign-team8.json --manifest data/screenspot-v2/manifest.jsonl \
   --url '배포된_HTTPS_EXEC_URL' --worker member-a --provider codex
 ./team acquire
 ```
@@ -40,12 +40,12 @@ Linux 또는 WSL에서 Python 3.10 이상, 사용할 교사의 CLI가 필요하�
 
 `doctor`와 `generate`는 기존 로그인에 접근하기 위해 호스트에서 실행한다. 추가 Python 패키지가 필요 없다. 나머지 명령은 선택한 실행 환경을 사용한다. `./team setup --backend local`은 저장소의 `.venv`에 `requirements-local.txt`의 Pillow만 설치하며 Docker를 호출하지 않는다. 가상환경 활성화는 필요 없다. 최초 설치에는 인터넷 연결이 필요하며 시스템 Python 패키지를 변경하지 않는다. Docker를 사용하려면 `./team setup --backend docker`를 실행한다. 선택은 Git에서 제외한 `.pipeline-backend`에 저장하고, 이후 인자 없는 `./team setup`은 같은 방식을 유지한다. 설정이 없을 때의 기본은 기존 Docker 방식이다. 설치 실패 시 이전 선택을 유지한다. Python에 venv 또는 pip가 없다면 해당 기능을 제공하는 Python 환경이나 Docker를 준비해야 하며 시스템 패키지를 자동 설치하지 않는다.
 
-## 2. ScreenSpot-v2 준비
+## 2. 이전 30건 파일럿 재현용 ScreenSpot-v2 준비
 
-공식 배포에서 이미지 약 1.3GB와 세 환경의 주석을 내려받는다. 지정 revision을 실제 commit으로 해석해 `source.json`에 기록한다. `data/`와 `runs/`는 Git에서 제외한다.
+이번 8분할 실행은 별도 팀 가이드의 전체 manifest를 사용하고 pilot 표본 추출은 실행하지 않는다. 아래는 이전 30건 파일럿을 재현할 때 사용하는 명령이다. 공식 배포에서 이미지 약 1.3GB와 세 환경의 주석을 내려받는다. 지정 revision을 실제 commit으로 해석해 `source.json`에 기록한다. `data/`와 `runs/`는 Git에서 제외한다.
 
 ```bash
-./pipeline fetch-screenspot --output data/screenspot-v2
+./pipeline fetch-screenspot --revision 5efbb1f1b5463a575f2eb7bc30fe29e49c15f93c --output data/screenspot-v2
 ./pipeline prepare --adapter screenspot_v2 \
   --annotations data/screenspot-v2 \
   --image-root data/screenspot-v2/images \

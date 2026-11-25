@@ -2,6 +2,12 @@
 
 GUI 화면, 태스크, 정답을 Codex 또는 Claude의 구독 기반 CLI에 제공해 영어 텍스트 trajectory를 생성한다. 데이터 변환, 순차 생성과 재개, 검수, 팀별 분담과 결과 취합을 지원한다. 모델 이름을 지정하지 않으면 CLI 기본 모델을 사용한다.
 
+## 이번 팀 생성
+
+이전 파일럿과 같은 ScreenSpot-v2의 전체 유효 입력 1,271건을 seed 42로 8묶음으로 나눈다. 팀원 약 4명이 하나씩 가져가고 끝나면 다음 묶음을 받는다. 같은 입력을 Codex와 Claude로 생성하므로 시트에는 교사별 8개, 총 16작업이 생긴다. ScreenSpot-v2는 `pilot_dev`로 유지한다.
+
+담당자와 팀원 모두 [ScreenSpot-v2 팀 실행 가이드](docs/screenspot-team-run.md)를 기준으로 다운로드, 변환과 8분할을 재현한다. 묶음은 159건 7개와 158건 1개다. 팀원은 시트와 점수표를 관리하지 않는다.
+
 ## 시작하기
 
 Linux 또는 WSL에서 Git, Python 3.10 이상과 사용할 교사의 CLI 및 구독 로그인이 필요하다. Docker가 없으면 아래 로컬 실행을 선택한다.
@@ -17,7 +23,7 @@ cd GUI-task-trajectory-generator
 전체 데이터는 담당자가 안내한 방법으로 `data/`에 준비한다. [공유 배정 설정](docs/shared-assignment.md)을 한 번 마친 뒤 다음과 같이 자동으로 작업을 받는다. Claude를 사용하면 `--provider claude`를 선택한다.
 
 ```bash
-./team join --campaign data/campaign.json --manifest data/full/manifest.jsonl \
+./team join --campaign data/screenspot-v2/campaign-team8.json --manifest data/screenspot-v2/manifest.jsonl \
   --url '배포된_HTTPS_EXEC_URL' --worker member-a --provider codex
 ./team acquire
 ./team doctor
@@ -34,6 +40,7 @@ cd GUI-task-trajectory-generator
 
 | 읽는 사람과 목적 | 문서 |
 | --- | --- |
+| 담당자와 팀원, 이번 ScreenSpot 8분할 실행 | [ScreenSpot 팀 가이드](docs/screenspot-team-run.md) |
 | 담당자, 공유 시트 최초 설정 | [자동 배정 안내](docs/shared-assignment.md) |
 | 팀원, 처음 실행 | [빠른 시작](QUICKSTART.md) |
 | 에이전트, 구조와 실행 계약 파악 | [에이전트 안내](docs/agent-manual.md) |
@@ -59,4 +66,4 @@ make check
 
 ## 연구 범위
 
-하버드 논문 *Finetuning with Sampling: SFT Learns Better Than You Think*의 후속 실험을 위한 텍스트 trajectory baseline이다. ScreenSpot-v2 30개를 두 교사로 비교한 파일럿에서 시작했으며, 다른 생성 데이터셋은 변환기를 통해 연결한다. ScreenSpot-v2는 `pilot_dev`로 유지하고 최종 평가는 ScreenSpot-Pro를 사용한다. 이 저장소는 교사 데이터 생성까지 제공하며 projection sampling과 학생 모델 SFT는 포함하지 않는다.
+하버드 논문 *Finetuning with Sampling: SFT Learns Better Than You Think*의 후속 실험을 위한 텍스트 trajectory baseline이다. ScreenSpot-v2 30개를 두 교사로 비교한 초기 파일럿에서 시작했고, 이번 팀 실행은 같은 데이터셋의 전체 유효 입력을 8묶음으로 생성한다. 다른 데이터셋은 변환기로 연결할 수 있다. ScreenSpot-v2는 `pilot_dev`로 유지하고 최종 평가는 ScreenSpot-Pro를 사용한다. 이 저장소는 교사 데이터 생성까지 제공하며 projection sampling과 학생 모델 SFT는 포함하지 않는다.

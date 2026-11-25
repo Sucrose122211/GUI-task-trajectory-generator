@@ -77,7 +77,11 @@ def parser():
     campaign.add_argument("--manifest", type=Path, required=True)
     campaign.add_argument("--name", required=True)
     campaign.add_argument("--seed", type=int, default=42)
-    campaign.add_argument("--batch-size", type=int, default=30)
+    partition = campaign.add_mutually_exclusive_group()
+    partition.add_argument("--batch-size", type=int, default=30)
+    partition.add_argument(
+        "--batch-count", type=int, help="Exact number of balanced, nonempty batches"
+    )
     campaign.add_argument(
         "--providers", nargs="+", choices=("codex", "claude"), default=["codex", "claude"]
     )
@@ -88,7 +92,13 @@ def parser():
 def dispatch(args):
     if args.command == "campaign":
         return create_campaign(
-            args.manifest, args.output, args.name, args.seed, args.batch_size, args.providers
+            args.manifest,
+            args.output,
+            args.name,
+            args.seed,
+            args.batch_size,
+            args.providers,
+            batch_count=args.batch_count,
         )
     if args.command == "fetch-screenspot":
         return fetch_screenspot(args.output, args.revision)

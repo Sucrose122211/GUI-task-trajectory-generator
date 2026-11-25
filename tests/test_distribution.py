@@ -187,6 +187,7 @@ class DistributionTest(unittest.TestCase):
             self.assertIn("requirements-local.txt", names)
             self.assertIn("apps-script/Code.gs", names)
             self.assertIn("docs/shared-assignment.md", names)
+            self.assertIn("docs/screenspot-team-run.md", names)
             self.assertFalse(any(n.startswith(".venv/") or n == ".pipeline-backend" for n in names))
             self.assertIn("examples/demo/images/toolbar.png", names)
             self.assertEqual(zipped.getinfo("software/team").external_attr >> 16 & 0o111, 0o111)
