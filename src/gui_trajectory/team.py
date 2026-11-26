@@ -19,6 +19,29 @@ from .io import load_manifest, read_json, write_json
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def shared_connection():
+    """Literal project defaults, restricted to the explicitly shared team connection."""
+    values = {}
+    path = ROOT / ".env"
+    allowed = {"GUI_TEAM_KEY", "GUI_TEAM_URL"}
+    if path.is_file():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            name, separator, value = line.strip().partition("=")
+            name = name.strip()
+            if name not in allowed:
+                continue
+            value = value.strip()
+            if not separator or not value:
+                raise ValueError("프로젝트 .env의 팀 연결 설정을 확인하세요.")
+            if value[0] in ("'", '"'):
+                if len(value) < 2 or value[-1] != value[0]:
+                    raise ValueError("프로젝트 .env의 따옴표 형식이 잘못되었습니다.")
+                value = value[1:-1]
+            values[name] = value
+    # Explicit process settings win; do not export file values to teacher subprocesses.
+    return {name: os.environ.get(name) or values.get(name) for name in allowed}
+
+
 def inside(path, base=ROOT):
     resolved = (base / path).resolve()
     if not resolved.is_relative_to(ROOT):
@@ -115,11 +138,18 @@ def parser():
     )
     register = sub.add_parser("register", help="담당자: 실험을 공유 시트에 등록")
     register.add_argument("--campaign", type=Path, required=True)
-    register.add_argument("--url", required=True, help="Apps Script 웹 앱 /exec 주소")
+    register.add_argument("--url", help="Apps Script /exec 주소 (기본 공용 .env)")
     join = sub.add_parser("join", help="공유 배정표에 참여, 시트 수동 편집 불필요")
-    join.add_argument("--campaign", type=Path, required=True)
-    join.add_argument("--manifest", type=Path, required=True, help="전체 데이터의 로컬 manifest")
-    join.add_argument("--url", required=True)
+    join.add_argument(
+        "--campaign", type=Path, default=Path("data/screenspot-v2/campaign-team8.json")
+    )
+    join.add_argument(
+        "--manifest",
+        type=Path,
+        default=Path("data/screenspot-v2/manifest.jsonl"),
+        help="전체 데이터의 로컬 manifest",
+    )
+    join.add_argument("--url", help="Apps Script /exec 주소 (기본 공용 .env)")
     join.add_argument("--worker", required=True)
     join.add_argument("--provider", choices=("codex", "claude"), required=True)
     sub.add_parser("acquire", help="미배정 작업 자동 선택, 진행 중이면 같은 작업 재개")
@@ -163,7 +193,11 @@ def main():
         )
         with coordination.session_lock(ROOT, config_path) if needs_lock else nullcontext():
             if args.command in ("register", "join"):
-                key = os.environ.get("GUI_TEAM_KEY") or getpass.getpass(
+                connection = shared_connection()
+                endpoint = args.url or connection["GUI_TEAM_URL"]
+                if not endpoint:
+                    raise ValueError("공용 .env의 GUI_TEAM_URL 또는 --url 주소가 필요합니다.")
+                key = connection["GUI_TEAM_KEY"] or getpass.getpass(
                     "참여 코드 (화면에 표시되지 않음): "
                 )
                 if not key:
@@ -180,7 +214,7 @@ def main():
                         for provider in catalog["providers"]
                     ]
                     result = coordination.request(
-                        args.url,
+                        endpoint,
                         key,
                         "register",
                         campaign_id=catalog["campaign_id"],
@@ -193,7 +227,7 @@ def main():
                         inside(args.config),
                         inside(args.campaign),
                         inside(args.manifest),
-                        args.url,
+                        endpoint,
                         args.worker,
                         args.provider,
                         key,

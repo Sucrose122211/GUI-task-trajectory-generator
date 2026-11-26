@@ -1,5 +1,7 @@
 # ScreenSpot-v2, 4명으로 8묶음 생성하기
 
+이번 임시 운영에 한해 사용자 요청으로 루트 `.env`의 공용 팀 키와 주소를 커밋합니다. 다른 프로젝트에 적용할 일반 규칙이 아닙니다. Codex/Claude 개인 인증은 계속 제외합니다. [저장소 한정 설정 설명](repository-only-settings.md)에 범위와 우선순위를 기록했습니다.
+
 이번 팀 생성은 이전 파일럿과 같은 ScreenSpot-v2의 전체 유효 입력을 사용합니다. 4명 정도가 공통 작업 목록에서 하나씩 가져가고, 먼저 끝낸 사람이 다음 작업을 받습니다. 담당자가 팀원마다 입력 ZIP을 만들거나 팀원이 진행표를 편집할 필요는 없습니다.
 
 ## 확정 설정
@@ -81,16 +83,15 @@ catalog 파일은 컴퓨터 경로와 이미지 본문을 포함하지 않습니
 Google Sheets와 Apps Script가 이미 배포돼 있고 연결 확인을 마쳤다면 setup과 재배포를 반복할 필요가 없습니다. 이번 변경은 로컬 분할 옵션이며 기존 Apps Script를 그대로 사용합니다. 처음 설정하는 경우만 [최초 배포 안내](shared-assignment.md#담당자-1-새-시트와-배정-서비스-만들기)를 따릅니다.
 
 ```bash
-./team register --campaign data/screenspot-v2/campaign-team8.json \
-  --url '배포된_HTTPS_EXEC_URL'
+./team register --campaign data/screenspot-v2/campaign-team8.json
 ```
 
-참여 코드를 터미널의 숨김 입력에 넣습니다. `ok: true`, `tasks: 16`이면 등록 성공입니다. 시트에는 이번 실험의 16행이 생깁니다. 연결 확인용 demo 2행이 남아 있으면 시트 전체 행 수는 더 많을 수 있습니다. 실험 이름으로 구분하고 직접 행을 지우거나 담당자를 입력하지 않습니다. 실제 등록과 모델 생성은 이 가이드를 작성하며 실행하지 않았습니다.
+공용 `.env`의 연결 설정을 자동 사용합니다. `ok: true`, `tasks: 16`이면 등록 성공입니다. 시트에는 이번 실험의 16행이 생깁니다. 연결 확인용 demo 2행이 남아 있으면 시트 전체 행 수는 더 많을 수 있습니다. 실험 이름으로 구분하고 직접 행을 지우거나 담당자를 입력하지 않습니다. 실제 등록과 모델 생성은 이 가이드를 작성하며 실행하지 않았습니다.
 
 담당자는 팀원에게 다음을 전달합니다.
 
 - 저장소 URL과 공통 코드 커밋, 이 가이드.
-- Apps Script `/exec` URL과 별도로 전달하는 참여 코드.
+- 공용 `.env`가 포함된 같은 코드 버전. 키나 URL을 별도로 설정할 필요는 없습니다.
 - 서로 다른 팀원 ID, 사용할 교사와 결과 ZIP을 올릴 공유 위치.
 
 ## 3. 4명 구성 예시
@@ -111,23 +112,18 @@ Google Sheets와 Apps Script가 이미 배포돼 있고 연결 확인을 마쳤�
 Codex 담당자 member-a의 명령입니다. 이름과 교사는 담당자가 정한 값으로 바꾸세요. Claude 담당자는 `--provider claude`를 사용합니다.
 
 ```bash
-./team join --campaign data/screenspot-v2/campaign-team8.json \
-  --manifest data/screenspot-v2/manifest.jsonl \
-  --url '배포된_HTTPS_EXEC_URL' --worker member-a --provider codex
+./team join --worker member-a --provider codex
 ./team acquire
 ./team doctor
 ./team plan
 ```
 
-join에서 참여 코드를 한 번 입력합니다. Codex는 `codex login`, Claude는 `claude` 실행 후 각자의 구독으로 로그인해 두세요. acquire가 배정한 입력은 158개 또는 159개이며 plan에서 확인할 수 있습니다. 여기까지 모델 호출은 없습니다.
+join은 저장소의 공용 `.env`를 자동 사용하므로 참여 코드를 입력하지 않습니다. Codex는 `codex login`, Claude는 `claude` 실행 후 각자의 구독으로 로그인해 두세요. acquire가 배정한 입력은 158개 또는 159개이며 plan에서 확인할 수 있습니다. 여기까지 모델 호출은 없습니다.
 
 이전에 연결 확인을 했거나 `job.json`이 이미 있다면 새 설정을 사용하세요. 예를 들어 다음처럼 `--config`를 붙이고, 이후 명령에도 계속 같은 값을 붙입니다.
 
 ```bash
-./team --config jobs/screenspot-team8.json join \
-  --campaign data/screenspot-v2/campaign-team8.json \
-  --manifest data/screenspot-v2/manifest.jsonl \
-  --url '배포된_HTTPS_EXEC_URL' --worker member-a --provider codex
+./team --config jobs/screenspot-team8.json join --worker member-a --provider codex
 ./team --config jobs/screenspot-team8.json acquire
 ./team --config jobs/screenspot-team8.json plan
 ```

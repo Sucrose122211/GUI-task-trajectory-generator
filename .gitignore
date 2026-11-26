@@ -13,6 +13,7 @@ runs/
 job.json
 *-job.json
 .env
+!/.env
 .env.*
 .agent/
 .agents/*

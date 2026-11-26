@@ -172,6 +172,7 @@ class DistributionTest(unittest.TestCase):
                 any(n.startswith(("data/", "runs/", ".codex/", ".agent/", ".team/")) for n in names)
             )
             self.assertNotIn("job.json", names)
+            self.assertIn(".env", names)  # Explicit public connection defaults for this repo only.
             self.assertEqual(
                 [n for n in names if n.startswith(".claude/")],
                 [".claude/skills/사용법/SKILL.md"],

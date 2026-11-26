@@ -4,7 +4,7 @@
 
 ## 1. 공통 정보 받기
 
-저장소 접근 권한과 코드 버전, 전체 데이터의 다운로드와 변환 방법, 공통 campaign 파일, Apps Script /exec URL, 참여 코드, 팀원 ID와 교사, 실제 ZIP 전달 위치를 받는다. ID는 서로 다르게 정하고 같은 실험의 데이터 revision과 변환 설정은 유지한다.
+저장소 접근 권한과 코드 버전, 전체 데이터의 다운로드와 변환 방법, 공통 campaign 준비 방법, 팀원 ID와 교사, 실제 ZIP 전달 위치를 받는다. ID는 서로 다르게 정하고 같은 실험의 데이터 revision과 변환 설정은 유지한다.
 
 ## 2. 환경과 전체 데이터 준비
 
@@ -34,14 +34,13 @@ Linux 또는 WSL의 Python 3.10 이상, venv와 pip, 교사 CLI를 사용한다.
 ## 3. 최초 참여와 자동 배정
 
 ```bash
-./team join --campaign data/screenspot-v2/campaign-team8.json --manifest data/screenspot-v2/manifest.jsonl \
-  --url '배포된_HTTPS_EXEC_URL' --worker member-a --provider codex
+./team join --worker member-a --provider codex
 ./team acquire
 ./team doctor
 ./team plan
 ```
 
-join 때 참여 코드를 숨김 입력으로 한 번 받는다. Claude는 --provider claude다. acquire가 빈 작업을 선점하고 job.json과 해당 입력을 만든다. 이미 진행 중이면 같은 배정을 반환한다. doctor와 plan까지는 모델을 호출하지 않는다. 이미 job.json이 있으면 --config jobs/screenspot-team8.json을 join 앞에 붙이고 이후 모든 명령에도 같은 --config를 붙인다. 이전 연결 확인용 jobs/connection-check.json을 재사용하지 않는다. 출력에 기본 설정의 다음 명령이 표시되더라도 선택한 --config를 유지한다. 원본 revision, 데이터와 프롬프트가 다르면 참여를 거절한다.
+join은 커밋된 공용 .env를 자동으로 읽으므로 키 입력, 환경 변수 설정이나 파일 편집은 필요 없다. 기본 ScreenSpot manifest와 campaign을 사용한다. Claude는 --provider claude다. acquire가 빈 작업을 선점하고 job.json과 해당 입력을 만든다. 이미 진행 중이면 같은 배정을 반환한다. doctor와 plan까지는 모델을 호출하지 않는다. 이미 job.json이 있으면 --config jobs/screenspot-team8.json을 join 앞에 붙이고 이후 모든 명령에도 같은 --config를 붙인다. 이전 연결 확인용 jobs/connection-check.json을 재사용하지 않는다. 출력에 기본 설정의 다음 명령이 표시되더라도 선택한 --config를 유지한다. 원본 revision, 데이터와 프롬프트가 다르면 참여를 거절한다.
 
 ## 4. 한 개 시험 후 전체 생성
 

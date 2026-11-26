@@ -8,13 +8,15 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from unittest.mock import patch
 
 from PIL import Image
 
 from gui_trajectory import coordination
 from gui_trajectory.campaign import build_campaign, create_campaign, load_campaign
-from gui_trajectory.data import prepare
+from gui_trajectory.data import prepare, relocate
 from gui_trajectory.io import load_manifest, read_json, write_json, write_jsonl
+from gui_trajectory.team import shared_connection
 
 PROJECT = Path(__file__).resolve().parents[1]
 
@@ -203,13 +205,34 @@ class CoordinationTest(unittest.TestCase):
             coordination.request(self.url, "PRIVATE_KEY_SENTINEL", "status")
         self.assertNotIn("PRIVATE_KEY_SENTINEL", str(caught.exception))
 
+    def test_project_env_defaults_are_literal_and_explicit_environment_wins(self):
+        (self.root / ".env").write_text(
+            "# This repository only\nGUI_TEAM_KEY='fixture-key'\n"
+            "GUI_TEAM_URL=https://fixture.example/exec\nOPENAI_API_KEY=ignored\n"
+        )
+        with patch("gui_trajectory.team.ROOT", self.root), patch.dict(os.environ, {}, clear=True):
+            values = shared_connection()
+            self.assertEqual(values["GUI_TEAM_KEY"], "fixture-key")
+            self.assertNotIn("GUI_TEAM_KEY", os.environ)
+            self.assertNotIn("OPENAI_API_KEY", values)
+            os.environ["GUI_TEAM_KEY"] = "override"
+            self.assertEqual(shared_connection()["GUI_TEAM_KEY"], "override")
+
     def test_worker_commands_update_sheet_without_manual_editing(self):
         environment = {
             **os.environ,
-            "GUI_TEAM_KEY": "fixture-key",
             "GUI_TEST_COUNTER": str(self.root / "calls"),
             "GUI_TEST_SCENARIO": "success",
         }
+        environment.pop("GUI_TEAM_KEY", None)
+        environment.pop("GUI_TEAM_URL", None)
+        (self.root / ".env").write_text(f"GUI_TEAM_KEY=fixture-key\nGUI_TEAM_URL={self.url}\n")
+        default_manifest = self.root / "data/screenspot-v2/manifest.jsonl"
+        write_jsonl(
+            default_manifest,
+            relocate(load_manifest(self.manifest), self.manifest, default_manifest),
+        )
+        write_json(self.root / "data/screenspot-v2/campaign-team8.json", read_json(self.campaign))
         binary = self.root / "fake-bin"
         binary.mkdir()
         teacher = binary / "codex"
@@ -239,15 +262,9 @@ class CoordinationTest(unittest.TestCase):
             self.assertNotIn("fixture-key", result.stdout + result.stderr)
             return result.stdout
 
-        run("register", "--campaign", "data/campaign.json", "--url", self.url)
+        run("register", "--campaign", "data/campaign.json")
         run(
             "join",
-            "--campaign",
-            "data/campaign.json",
-            "--manifest",
-            "data/full.jsonl",
-            "--url",
-            self.url,
             "--worker",
             "alice",
             "--provider",
@@ -285,6 +302,7 @@ class CoordinationTest(unittest.TestCase):
         for archive in (self.root / "dist").glob("*.zip"):
             with zipfile.ZipFile(archive) as zipped:
                 self.assertFalse(any("/.team/" in n for n in zipped.namelist()))
+                self.assertFalse(any(n.endswith("/.env") for n in zipped.namelist()))
 
 
 if __name__ == "__main__":

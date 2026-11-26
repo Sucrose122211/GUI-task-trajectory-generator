@@ -1,5 +1,7 @@
 # 텍스트 trajectory 파이프라인 실행 안내
 
+이번 임시 운영에 한해 사용자 요청으로 루트 `.env`의 공용 팀 키와 주소를 커밋합니다. 다른 프로젝트에 적용할 일반 규칙이 아닙니다. Codex/Claude 개인 인증은 계속 제외합니다. [저장소 한정 설정 설명](repository-only-settings.md)에 범위와 우선순위를 기록했습니다.
+
 초기 파일럿은 ScreenSpot-v2 30개였으며, 현재 팀 실행은 전체 유효 입력 1,271개를 8묶음으로 나눠 같은 조건의 Codex와 Claude에 제공한다. 약 4명이 작업을 하나씩 가져간다. 교사별 8개, 총 16작업이다. [이번 팀 실행 가이드](screenspot-team-run.md)를 우선 따른다. 실제 모델을 지정하지 않으면 각 CLI의 기본 모델을 사용한다. 다른 데이터셋은 공통 manifest로 변환한 뒤 같은 생성 명령을 사용한다.
 
 ## 공유 시트 자동 배정 (기본)
@@ -9,13 +11,12 @@
 ```bash
 ./pipeline campaign --manifest data/screenspot-v2/manifest.jsonl --name screenspot-v2-team8-v1 \
   --seed 42 --batch-count 8 --providers codex claude --output data/screenspot-v2/campaign-team8.json
-./team register --campaign data/screenspot-v2/campaign-team8.json --url '배포된_HTTPS_EXEC_URL'
-./team join --campaign data/screenspot-v2/campaign-team8.json --manifest data/screenspot-v2/manifest.jsonl \
-  --url '배포된_HTTPS_EXEC_URL' --worker member-a --provider codex
+./team register --campaign data/screenspot-v2/campaign-team8.json
+./team join --worker member-a --provider codex
 ./team acquire
 ```
 
-register와 join은 참여 코드를 숨김 입력으로 받는다. 연결 상태는 `.team/`에 보관하며 Git과 ZIP에는 넣지 않는다. `./team sync`는 상태만 재전송하고, `./team return`은 아직 결과가 없는 배정만 반납한다. 모델 선택은 기존 CLI 기본값이다. 공유 배정에서는 등록된 입력과 프롬프트, 교사, 결과 경로를 유지해야 한다. 전체 명령과 예외 처리는 [자동 배정 안내](shared-assignment.md)를 따른다.
+register와 join은 공용 `.env`의 키와 주소를 자동으로 읽으며 팀원은 별도로 설정하지 않는다. 연결 상태는 `.team/`에 보관하며 Git과 ZIP에는 넣지 않는다. `./team sync`는 상태만 재전송하고, `./team return`은 아직 결과가 없는 배정만 반납한다. 모델 선택은 기존 CLI 기본값이다. 공유 배정에서는 등록된 입력과 프롬프트, 교사, 결과 경로를 유지해야 한다. 전체 명령과 예외 처리는 [자동 배정 안내](shared-assignment.md)를 따른다.
 
 ## 기존 수동 배정 실행
 

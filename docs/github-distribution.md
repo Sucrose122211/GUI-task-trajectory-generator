@@ -34,7 +34,7 @@ gh repo create gui-trajectory --private
 
 1. GitHub 저장소 URL, 접근 권한과 공통 코드 버전.
 2. 전체 데이터의 고정 revision과 다운로드 및 변환 명령.
-3. 공통 campaign 파일, Apps Script /exec URL과 별도로 전달하는 참여 코드.
+3. 공용 `.env`가 포함된 코드와 공통 campaign 재현 명령. 팀원은 키나 URL을 설정하지 않습니다. 이 저장소 한정 예외는 [공용 설정 설명](repository-only-settings.md)을 따릅니다.
 4. 서로 다른 팀원 ID, 사용할 교사와 실제 결과 ZIP을 전달할 공유 위치.
 
 시트 편집 권한은 팀원에게 필요하지 않습니다. join 이후 배정과 진행은 자동 기록합니다. 기존 shard와 bundle-data는 수동 ZIP 배분이 필요한 경우에도 사용할 수 있습니다. 구독 인증은 각자 자기 컴퓨터에서 유지합니다.

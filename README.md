@@ -1,5 +1,7 @@
 # GUI Task Trajectory Generator
 
+이번 임시 운영에 한해 사용자 요청으로 루트 `.env`의 공용 팀 키와 주소를 커밋합니다. 다른 프로젝트에 적용할 일반 규칙이 아닙니다. Codex/Claude 개인 인증은 계속 제외합니다. [저장소 한정 설정 설명](docs/repository-only-settings.md)에 범위와 우선순위를 기록했습니다.
+
 GUI 화면, 태스크, 정답을 Codex 또는 Claude의 구독 기반 CLI에 제공해 영어 텍스트 trajectory를 생성한다. 데이터 변환, 순차 생성과 재개, 검수, 팀별 분담과 결과 취합을 지원한다. 모델 이름을 지정하지 않으면 CLI 기본 모델을 사용한다.
 
 ## 이번 팀 생성
@@ -23,8 +25,7 @@ cd GUI-task-trajectory-generator
 전체 데이터는 담당자가 안내한 방법으로 `data/`에 준비한다. [공유 배정 설정](docs/shared-assignment.md)을 한 번 마친 뒤 다음과 같이 자동으로 작업을 받는다. Claude를 사용하면 `--provider claude`를 선택한다.
 
 ```bash
-./team join --campaign data/screenspot-v2/campaign-team8.json --manifest data/screenspot-v2/manifest.jsonl \
-  --url '배포된_HTTPS_EXEC_URL' --worker member-a --provider codex
+./team join --worker member-a --provider codex
 ./team acquire
 ./team doctor
 ./team plan
@@ -34,7 +35,7 @@ cd GUI-task-trajectory-generator
 ./team submit
 ```
 
-`join` 때 참여 코드를 입력하면 배정과 진행 상태는 자동 기록된다. 팀원은 시트나 점수표를 관리하지 않는다. 전량 생성 후 `submit`하고 `acquire`하면 다음 작업을 받는다. `plan`까지는 생성하지 않는다. `run`은 구독 사용량을 소비하며, 같은 명령으로 완료한 입력을 건너뛰고 재개한다. 담당 데이터가 없으면 [합성 예제](docs/dataset-adaptation.md#1-포함된-예제로-변환-확인)로 변환과 계획 확인부터 실행할 수 있다.
+`join`은 커밋된 공용 `.env`를 자동으로 읽고 배정과 진행 상태를 기록한다. 키 입력이나 환경 변수 설정은 필요 없다. 팀원은 시트나 점수표를 관리하지 않는다. 전량 생성 후 `submit`하고 `acquire`하면 다음 작업을 받는다. `plan`까지는 생성하지 않는다. `run`은 구독 사용량을 소비하며, 같은 명령으로 완료한 입력을 건너뛰고 재개한다. 담당 데이터가 없으면 [합성 예제](docs/dataset-adaptation.md#1-포함된-예제로-변환-확인)로 변환과 계획 확인부터 실행할 수 있다.
 
 ## 매뉴얼
 

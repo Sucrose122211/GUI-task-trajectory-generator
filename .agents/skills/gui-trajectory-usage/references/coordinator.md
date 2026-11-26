@@ -8,7 +8,7 @@ Linux 또는 WSL에서 저장소를 clone하고 team setup --backend local을 �
 
 ## 2. 공유 시트 최초 설정
 
-기존 배포와 연결 확인이 끝났으면 이 절을 반복하지 않고 새 campaign 등록으로 진행한다. 이번 로컬 분할 옵션 변경에 Apps Script 재배포는 필요 없다. 새 환경이라면 Google Sheets를 새로 만들고 확장 프로그램 → Apps Script를 연다. apps-script/Code.gs를 붙여넣고, 프로젝트 설정에서 manifest 표시를 켠 뒤 apps-script/appsscript.json도 반영한다. setup 함수를 한 번 실행하여 권한을 승인한다. Campaigns와 Tasks 탭이 생기며, 프로젝트 설정의 Script properties에 SHEET_ID와 TEAM_KEY가 자동 생성된다. 참여 코드는 로그나 문서에 넣지 말고 별도 전달한다.
+기존 배포와 연결 확인이 끝났으면 이 절을 반복하지 않고 새 campaign 등록으로 진행한다. 이번 로컬 분할 옵션 변경에 Apps Script 재배포는 필요 없다. 새 환경이라면 Google Sheets를 새로 만들고 확장 프로그램 → Apps Script를 연다. apps-script/Code.gs를 붙여넣고, 프로젝트 설정에서 manifest 표시를 켠 뒤 apps-script/appsscript.json도 반영한다. setup 함수를 한 번 실행하여 권한을 승인한다. Campaigns와 Tasks 탭이 생기며, 프로젝트 설정의 Script properties에 SHEET_ID와 TEAM_KEY가 자동 생성된다. 이번 저장소는 사용자가 승인한 임시 예외로 루트 .env에 공용 키와 URL을 커밋하고 자동으로 읽는다. 팀원은 별도로 설정하지 않는다. 개인 CLI 인증을 공유하는 예외는 아니다.
 
 웹 앱으로 새 배포하고 실행 사용자는 본인, 접근은 모든 사용자로 선택한다. /exec URL을 사용한다. Workspace 정책상 이 배포가 불가능하면 관리자 허용 또는 다른 계정이 필요하다. 정확한 화면별 절차는 docs/shared-assignment.md를 읽는다. 실제 배포가 끝나지 않았다면 끝났다고 말하지 않는다.
 
@@ -19,14 +19,14 @@ Linux 또는 WSL에서 저장소를 clone하고 team setup --backend local을 �
 ```bash
 ./pipeline campaign --manifest data/screenspot-v2/manifest.jsonl --name screenspot-v2-team8-v1 \
   --seed 42 --batch-count 8 --providers codex claude --output data/screenspot-v2/campaign-team8.json
-./team register --campaign data/screenspot-v2/campaign-team8.json --url '배포된_HTTPS_EXEC_URL'
+./team register --campaign data/screenspot-v2/campaign-team8.json
 ```
 
-register의 숨김 입력으로 참여 코드를 넣는다. 같은 화면은 나누지 않고 정확히 8개의 비어 있지 않은 묶음을 만든다. batch-size 30을 동시에 쓰지 않는다. 각 묶음에 교사별 작업이 생긴다. 한 교사만 수집하면 providers를 하나로 지정한다. 같은 실험 재등록은 진행을 보존하고 설정이 다른 재등록은 거절한다. 변경은 새 실험 이름으로 한다.
+register는 공용 .env를 자동으로 읽는다. 팀원에게 키나 URL을 요구하지 않는다. 같은 화면은 나누지 않고 정확히 8개의 비어 있지 않은 묶음을 만든다. batch-size 30을 동시에 쓰지 않는다. 각 묶음에 교사별 작업이 생긴다. 한 교사만 수집하면 providers를 하나로 지정한다. 같은 실험 재등록은 진행을 보존하고 설정이 다른 재등록은 거절한다. 변경은 새 실험 이름으로 한다.
 
 ## 4. 팀원에게 전달
 
-저장소와 공통 커밋, 전체 데이터 다운로드 및 변환 명령, campaign 파일, /exec URL과 별도 참여 코드, 중복되지 않는 팀원 ID와 교사, 실제 결과 ZIP 전달 위치를 안내한다. 팀원은 join, acquire, doctor, plan, 제한 run과 전체 run, submit, acquire로 진행한다. 시트 편집 권한이나 수동 진행 기록을 요구하지 않는다. 약 4명으로 운영하며 Codex 2명과 Claude 2명은 교사 구독에 맞춘 구성 예시다. 사람별 입력을 고정하지 않고 먼저 끝낸 사람이 자기 교사의 다음 작업을 받는다.
+저장소와 공통 커밋, 전체 데이터 다운로드 및 변환 명령, 공용 .env가 포함된 코드, 중복되지 않는 팀원 ID와 교사, 실제 결과 ZIP 전달 위치를 안내한다. 팀원은 join, acquire, doctor, plan, 제한 run과 전체 run, submit, acquire로 진행한다. 시트 편집 권한이나 수동 진행 기록을 요구하지 않는다. 약 4명으로 운영하며 Codex 2명과 Claude 2명은 교사 구독에 맞춘 구성 예시다. 사람별 입력을 고정하지 않고 먼저 끝낸 사람이 자기 교사의 다음 작업을 받는다.
 
 ## 5. 진행과 결과 수령
 

@@ -22,6 +22,8 @@ description: Explain the GUI Task Trajectory Generator workflow step by step in 
 
 현재 데이터셋은 ScreenSpot-v2 전체 유효 입력 1,271건, seed 42, batch-count 8이다. 이전 30건 파일럿이나 합성 예제로 바꾸지 않는다. 두 교사 비교를 유지하므로 8입력 묶음과 16교사별 작업을 구분한다. 화면 그룹은 유지하고 role은 pilot_dev다. 구체적 고정 revision과 명령은 선택한 역할 reference 및 docs/screenspot-team-run.md를 따른다.
 
+사용자가 이번 1-2일 운영의 저장소에 한해 공용 팀 키와 URL을 루트 .env에 커밋하도록 승인했다. 이는 이 저장소 한정 예외이며 다른 프로젝트나 개인 CLI/OAuth 인증에 적용하지 않는다. 팀원에게 키 입력, 환경 변수 export, .env 편집이나 URL 설정을 요구하지 않는다. 공용 키를 답변이나 로그에 출력하지 않는다. 자세한 범위는 docs/repository-only-settings.md를 따른다.
+
 기본 절차는 Google Sheets 자동 배정이다. 팀원에게 시트, 담당자 칸, 완료 표시나 점수 CSV 편집을 요구하지 않는다. 기존 수동 ZIP 배분은 사용자가 그 방식을 지정했을 때만 안내한다.
 
 현재 저장소를 읽을 수 있으면 명령과 옵션은 `src/gui_trajectory/cli.py`, `src/gui_trajectory/team.py` 및 `docs/pipeline-usage.md`와 대조한다. 안내만을 위해 Docker 빌드, 인증 확인, 생성 또는 외부 조회를 실행할 필요는 없다. 저장소가 없어도 이 스킬에 포함된 절차로 안내할 수 있다.

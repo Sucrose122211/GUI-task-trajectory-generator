@@ -27,6 +27,18 @@
   real datasets, generated results, local research files, and credentials stay excluded.
 - GitHub Actions runs `make build` and `make check` with fake teachers only.
 
+# Repository-only shared configuration exception
+
+- The user explicitly authorized committing root `.env` with GUI_TEAM_KEY and
+  GUI_TEAM_URL for this short-lived (1-2 day) repository. This is intentional,
+  repository-specific sharing, not a general credential-handling policy.
+- Team commands load these defaults automatically. Do not ask workers to edit env
+  files, export variables, or enter a key. Unless the user changes this decision,
+  preserve the shared file rather than removing it as generic secret cleanup.
+- This exception covers only the public team connection and its software release
+  ZIP. Never print the key or include CLI credentials, OAuth/service-account keys,
+  `.team/`, `.env.local`, or other personal secrets. Read docs/repository-only-settings.md.
+
 # Shared assignment
 
 - Default team distribution uses a seeded campaign catalog and Google Sheets through

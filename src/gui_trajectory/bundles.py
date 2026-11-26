@@ -13,6 +13,7 @@ from .io import file_digest, image_path, load_manifest, read_json
 from .review import results
 
 SOURCE_FILES = (
+    ".env",  # Explicitly shared for this short-lived repository; never CLI credentials.
     ".dockerignore",
     ".gitignore",
     ".gitattributes",
@@ -33,6 +34,7 @@ SOURCE_FILES = (
     "docs/usage-skill.md",
     "docs/shared-assignment.md",
     "docs/screenspot-team-run.md",
+    "docs/repository-only-settings.md",
     "apps-script/Code.gs",
     "apps-script/appsscript.json",
     "tests/test_apps_script.cjs",

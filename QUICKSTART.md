@@ -1,5 +1,7 @@
 # GUI trajectory 생성, 팀원용 빠른 시작
 
+이번 임시 운영에 한해 사용자 요청으로 루트 `.env`의 공용 팀 키와 주소를 커밋합니다. 다른 프로젝트에 적용할 일반 규칙이 아닙니다. Codex/Claude 개인 인증은 계속 제외합니다. [저장소 한정 설정 설명](docs/repository-only-settings.md)에 범위와 우선순위를 기록했습니다.
+
 GUI 화면, 지시문과 정답을 받아 영어 관찰 설명을 생성합니다. Codex 또는 Claude 구독 중 하나를 선택합니다. 모델 이름은 지정하지 않아도 됩니다.
 
 에이전트에게 순서대로 설명받으려면 `/사용법 팀원`을 입력합니다. 담당자는 `/사용법 담당자`를 사용합니다. Codex가 한글 slash 명령을 거절하면 `$gui-trajectory-usage 팀원` 또는 `$gui-trajectory-usage 담당자`를 사용하세요. 불러오기 방법과 역할별 전체 절차는 [사용법 스킬](docs/usage-skill.md)에 있습니다.
@@ -25,7 +27,7 @@ CLI 설치가 필요한 경우 [Codex 공식 안내](https://developers.openai.c
 
 ## 2. 전체 데이터 준비와 참여
 
-이번 실행은 ScreenSpot-v2 전체 유효 입력 1,271건, seed 42, 8묶음입니다. 약 4명이 하나씩 가져가며, Codex와 Claude를 모두 수집하므로 총 16작업입니다. 담당자에게 Apps Script `/exec` URL, 참여 코드, 서로 다른 팀원 ID와 사용할 교사를 받습니다. 데이터셋과 revision 및 변환 설정은 모두 같아야 합니다. 담당자 최초 준비는 [공유 배정 안내](docs/shared-assignment.md)에 있습니다. 팀원은 시트를 열거나 편집하지 않습니다.
+이번 실행은 ScreenSpot-v2 전체 유효 입력 1,271건, seed 42, 8묶음입니다. 약 4명이 하나씩 가져가며, Codex와 Claude를 모두 수집하므로 총 16작업입니다. 담당자에게 서로 다른 팀원 ID와 사용할 교사를 받습니다. 배정 주소와 공용 코드는 저장소의 `.env`에서 자동으로 읽습니다. 데이터셋과 revision 및 변환 설정은 모두 같아야 합니다. 담당자 최초 준비는 [공유 배정 안내](docs/shared-assignment.md)에 있습니다. 팀원은 시트를 열거나 편집하지 않습니다.
 
 전체 데이터와 작업 목록은 각자 다음과 같이 준비합니다. 기존에 같은 파일이 있으면 재사용합니다. campaign 파일은 이미 있으면 다시 만들지 않습니다. 기존 연결 확인용 합성 예제와 이전 30건 표본을 사용하지 않습니다.
 
@@ -41,17 +43,16 @@ CLI 설치가 필요한 경우 [Codex 공식 안내](https://developers.openai.c
   --providers codex claude --output data/screenspot-v2/campaign-team8.json
 ```
 
-변환은 valid 1,271건과 invalid 1건, 분할은 159건 7묶음과 158건 1묶음입니다. 담당자는 같은 catalog를 시트에 한 번 register해야 합니다. [전체 팀 가이드](docs/screenspot-team-run.md)에 등록, 4명 교사 구성 예시와 취합까지 설명했습니다. 아래 URL과 팀원 ID 및 교사는 실제 전달받은 값으로 바꿉니다.
+변환은 valid 1,271건과 invalid 1건, 분할은 159건 7묶음과 158건 1묶음입니다. 담당자는 같은 catalog를 시트에 한 번 register해야 합니다. [전체 팀 가이드](docs/screenspot-team-run.md)에 등록, 4명 교사 구성 예시와 취합까지 설명했습니다. 아래 팀원 ID와 교사는 실제 정한 값으로 바꿉니다. URL이나 키 설정은 필요 없습니다.
 
 ```bash
-./team join --campaign data/screenspot-v2/campaign-team8.json --manifest data/screenspot-v2/manifest.jsonl \
-  --url '배포된_HTTPS_EXEC_URL' --worker member-a --provider codex
+./team join --worker member-a --provider codex
 ./team acquire
 ./team doctor
 ./team plan
 ```
 
-join 안내에 참여 코드를 입력합니다. 화면에 표시되지 않으며 `.team/`에 저장해 이후 다시 입력하지 않습니다. Claude는 `--provider claude`를 사용합니다. `acquire`는 빈 작업을 가져와 `job.json`을 만듭니다. 이미 진행 중인 작업은 같은 배정을 반환합니다. `doctor`와 `plan`까지는 모델을 호출하지 않습니다.
+join은 제공된 `.env`를 자동으로 읽습니다. 참여 코드 입력, `.env` 편집과 export는 필요 없습니다. 개인 작업 연결은 `.team/`에 저장합니다. Claude는 `--provider claude`를 사용합니다. `acquire`는 빈 작업을 가져와 `job.json`을 만듭니다. 이미 진행 중인 작업은 같은 배정을 반환합니다. `doctor`와 `plan`까지는 모델을 호출하지 않습니다.
 
 ## 3. 생성과 재개
 
