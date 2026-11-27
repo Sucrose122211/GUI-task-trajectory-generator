@@ -2,7 +2,7 @@
 
 이번 임시 운영에 한해 사용자 요청으로 루트 `.env`의 공용 팀 키와 주소를 커밋합니다. 다른 프로젝트에 적용할 일반 규칙이 아닙니다. Codex/Claude 개인 인증은 계속 제외합니다. [저장소 한정 설정 설명](repository-only-settings.md)에 범위와 우선순위를 기록했습니다.
 
-초기 파일럿은 ScreenSpot-v2 30개였으며, 현재 팀 실행은 전체 유효 입력 1,271개를 8묶음으로 나눠 같은 조건의 Codex와 Claude에 제공한다. 약 4명이 작업을 하나씩 가져간다. 교사별 8개, 총 16작업이다. [이번 팀 실행 가이드](screenspot-team-run.md)를 우선 따른다. 실제 모델을 지정하지 않으면 각 CLI의 기본 모델을 사용한다. 다른 데이터셋은 공통 manifest로 변환한 뒤 같은 생성 명령을 사용한다.
+초기 파일럿은 ScreenSpot-v2 30개였으며, 현재 팀 실행은 전체 유효 입력 1,271개를 8묶음으로 나눠 같은 조건의 Codex와 Claude에 제공한다. 약 4명이 작업을 하나씩 가져간다. 교사별 8개, 총 16작업이다. [이번 팀 실행 가이드](screenspot-team-run.md)를 우선 따른다. 다른 데이터셋은 공통 manifest로 변환한 뒤 같은 생성 명령을 사용한다.
 
 ## 공유 시트 자동 배정 (기본)
 
@@ -88,7 +88,7 @@ ScreenSpot-v2의 픽셀 `xywh` box를 원본 이미지 기준 `[0,1]`의 `xyxy` 
   --output runs/pilot30-claude
 ```
 
-필요하면 `--model MODEL_ID`로 명시적인 모델을 선택할 수 있다. 기본 모드에서는 `cli_default`로 기록하며 실제 모델 정보는 CLI가 노출하는 범위만 남긴다. Codex는 개인 config와 AGENTS 문맥을 제외한 CLI 기본 모델을 사용한다. 정확한 모델 snapshot 재현이 필요하면 명시 모델을 지정한다.
+새 작업에서 모델을 생략하면 Codex는 `gpt-6.2-sol`을 `medium` 추론 수준으로 호출하며 두 설정을 `run.json`에 기록한다. Claude는 CLI 기본 모델을 사용하고 `cli_default`로 기록한다. 기존 `cli_default` Codex 작업은 재개 시 기존 호출 설정을 사용한다. `--model MODEL_ID`로 모델을 지정하면 해당 모델의 기본 추론 수준을 사용한다. Codex 호출에는 개인 설정과 AGENTS 문맥을 제외한다.
 
 각 입력은 새 세션에서 순차 처리한다. 임시 작업 폴더에는 원본 화면과 출력 schema만 제공한다. Codex는 이미지를 첨부하고, Claude는 읽기 도구로 같은 이미지를 받는다. 예상하지 않은 도구 사용이나 Claude의 이미지 전달 미확인 결과는 실패로 처리한다. CLI의 내부 reasoning과 이미지 base64 이벤트는 결과 파일에 보존하지 않는다.
 

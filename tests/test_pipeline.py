@@ -227,15 +227,32 @@ class PipelineTest(unittest.TestCase):
         self.assertFalse(self.counter.exists())
         self.assertFalse((self.root / "run").exists())
 
-    def test_default_model_generation_does_not_require_a_name(self):
+    def test_codex_defaults_to_sol_with_medium_reasoning(self):
         self.prepare_samples(1)
-        result = generate(
-            self.manifest, "codex", None, self.root / "default", binary=str(self.fake), retries=0
-        )
+        with patch.dict(os.environ, {"GUI_TEST_CODEX_SETTINGS": "sol-medium"}):
+            result = generate(
+                self.manifest, "codex", None, self.root / "default", binary=str(self.fake), retries=0
+            )
         self.assertEqual(result["generated"], 1)
-        self.assertEqual(
-            read_json(self.root / "default/run.json")["config"]["model"], "cli_default"
-        )
+        config = read_json(self.root / "default/run.json")["config"]
+        self.assertEqual(config["model"], "gpt-6.2-sol")
+        self.assertEqual(config["reasoning_effort"], "medium")
+
+    def test_existing_codex_default_run_resumes_with_original_settings(self):
+        self.prepare_samples()
+        output = self.root / "legacy"
+        with (
+            patch("gui_trajectory.runner.CODEX_DEFAULT_MODEL", None),
+            patch("gui_trajectory.runner.CODEX_DEFAULT_REASONING_EFFORT", None),
+        ):
+            generate(self.manifest, "codex", None, output, binary=str(self.fake), limit=1)
+        config = read_json(output / "run.json")["config"]
+        self.assertEqual(config["model"], "cli_default")
+        with patch.dict(os.environ, {"GUI_TEST_CODEX_SETTINGS": "cli-default"}):
+            result = generate(self.manifest, "codex", None, output, binary=str(self.fake))
+        self.assertEqual(result["generated"], 1)
+        self.assertEqual(result["skipped"], 1)
+        self.assertEqual(read_json(output / "run.json")["config"], config)
 
     def test_timeout_is_recorded_without_leaving_a_live_child(self):
         self.prepare_samples(1)

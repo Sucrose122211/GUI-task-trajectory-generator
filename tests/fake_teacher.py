@@ -43,6 +43,13 @@ else:
     if "exec" in args:
         image = Path(args[args.index("--image") + 1])
         assert image.is_file() and "Reference answer" in prompt
+        expected_settings = os.environ.get("GUI_TEST_CODEX_SETTINGS")
+        if expected_settings == "sol-medium":
+            assert args[args.index("--model") + 1] == "gpt-6.2-sol"
+            assert 'model_reasoning_effort="medium"' in args
+        elif expected_settings == "cli-default":
+            assert "--model" not in args
+            assert not any(arg.startswith("model_reasoning_effort=") for arg in args)
         if scenario == "tool":
             print(json.dumps({"type": "item.completed", "item": {"type": "command_execution"}}))
         target = Path(args[args.index("--output-last-message") + 1])

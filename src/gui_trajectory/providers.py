@@ -169,8 +169,8 @@ def screenshot(work):
     return images[0]
 
 
-def codex_command(binary, model, work):
-    return [
+def codex_command(binary, model, work, *, reasoning_effort=None):
+    command = [
         binary,
         "exec",
         "--ignore-user-config",
@@ -195,8 +195,12 @@ def codex_command(binary, model, work):
         "--output-last-message",
         str(work / "final.json"),
         "--json",
-        "-",
-    ] + (["--model", model] if model else [])
+    ]
+    if model:
+        command.extend(["--model", model])
+    if reasoning_effort:
+        command.extend(["--config", f'model_reasoning_effort="{reasoning_effort}"'])
+    return [*command, "-"]
 
 
 def claude_command(binary, model, work):
@@ -273,11 +277,13 @@ def inspect_claude(events, work):
     return payload, metadata, audit
 
 
-def invoke(provider, model, work, prompt, *, timeout=300, binary=None):
+def invoke(provider, model, work, prompt, *, timeout=300, binary=None, reasoning_effort=None):
     binary = binary or provider
-    command = (codex_command if provider == "codex" else claude_command)(binary, model, work)
     if provider == "claude":
+        command = claude_command(binary, model, work)
         prompt = f"Read the image file {screenshot(work)} using Read.\n\n" + prompt
+    else:
+        command = codex_command(binary, model, work, reasoning_effort=reasoning_effort)
     code, stdout, stderr = process(command, cwd=work, prompt=prompt, timeout=timeout)
     events = decode_events(stdout)
     failure = code != 0 or any(e.get("type") in ("error", "turn.failed") for e in events)

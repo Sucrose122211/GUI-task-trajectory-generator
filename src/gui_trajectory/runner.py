@@ -14,6 +14,9 @@ from .io import digest, file_digest, image_path, load_manifest, read_json, write
 from .providers import RESOURCE, SCHEMA, ProviderError, doctor, invoke
 from .validation import validate_output
 
+CODEX_DEFAULT_MODEL = "gpt-6.2-sol"
+CODEX_DEFAULT_REASONING_EFFORT = "medium"
+
 
 def generate(
     manifest,
@@ -33,6 +36,14 @@ def generate(
         raise ValueError("limit must be positive")
     if timeout <= 0 or not 0 <= retries <= 5:
         raise ValueError("timeout must be positive; retries must be between 0 and 5")
+    output = Path(output).resolve()
+    config_path = output / "run.json"
+    reasoning_effort = None
+    if provider == "codex" and not model:
+        # An existing CLI-default run must keep its original settings on resume.
+        if not config_path.exists() or read_json(config_path)["config"]["model"] != "cli_default":
+            model = CODEX_DEFAULT_MODEL
+            reasoning_effort = CODEX_DEFAULT_REASONING_EFFORT
     rows = load_manifest(manifest)
     template = (RESOURCE / "teacher-v1.txt").read_text(encoding="utf-8")
     config = {
@@ -43,6 +54,8 @@ def generate(
         "schema_sha256": digest(SCHEMA),
         "point_tolerance": 0.002,
     }
+    if reasoning_effort is not None:
+        config["reasoning_effort"] = reasoning_effort
     for row in rows:
         if file_digest(image_path(manifest, row)) != row["image"]["sha256"]:
             raise ValueError(f"Image hash mismatch: {row['sample_id']}")
@@ -63,14 +76,12 @@ def generate(
         raise ProviderError("auth", readiness["reason"])
     config["cli_version"] = readiness["version"]
     cohort = {"config": config, "manifest_identity": manifest_identity}
-    output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=True)
     with (output / ".lock").open("w") as lock:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:
             raise ValueError("Another generator is using this run directory") from exc
-        config_path = output / "run.json"
         if config_path.exists() and read_json(config_path) != cohort:
             raise ValueError("Run settings or manifest changed; use a new output directory")
         if not config_path.exists():
@@ -125,6 +136,7 @@ def generate(
                             prompt,
                             timeout=timeout,
                             binary=binary,
+                            reasoning_effort=reasoning_effort,
                         )
                     result.update(
                         {
